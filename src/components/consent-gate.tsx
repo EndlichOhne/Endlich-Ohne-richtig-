@@ -98,11 +98,11 @@ export function ConsentGate() {
 
         <Button
           type="button"
-          className="min-h-16 w-full rounded-xl text-base"
+          className="sticky bottom-3 z-[81] min-h-16 w-full rounded-xl text-base shadow-lg"
           disabled={!canEnter}
           onClick={enter}
         >
-          {t("consent.accept")}
+          {canEnter ? t("consent.accept") : t("consent.locked")}
         </Button>
 
         <div>

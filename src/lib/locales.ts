@@ -15,6 +15,7 @@ export const EN: Record<string, string> = {
   "consent.body":
     "Each consent must be confirmed separately. Without an explicit 18+ confirmation the app stays closed. No diagnosis, no guarantee.",
   "consent.accept": "Enter the app",
+  "consent.locked": "Tick all 4 boxes first",
   "consent.agbCheck": "I accept the terms.",
   "consent.privacyCheck": "I accept the privacy notice.",
   "consent.medicalCheck":
@@ -229,6 +230,7 @@ export const TR: Record<string, string> = {
   "consent.body":
     "Her onay ayrı verilmelidir. Açık 18+ onayı olmadan uygulama kapalı kalır. Teşhis yok, garanti yok.",
   "consent.accept": "Uygulamaya gir",
+  "consent.locked": "Önce 4 kutuyu da işaretle",
   "consent.agbCheck": "Şartları kabul ediyorum.",
   "consent.privacyCheck": "Gizlilik bildirimini kabul ediyorum.",
   "consent.medicalCheck":
@@ -318,6 +320,7 @@ export const RU: Record<string, string> = {
   "consent.body":
     "Каждое согласие нужно подтвердить отдельно. Без явного подтверждения 18+ приложение закрыто. Без диагноза, без гарантии.",
   "consent.accept": "Войти в приложение",
+  "consent.locked": "Сначала отметьте все 4 пункта",
   "consent.agbCheck": "Я принимаю условия.",
   "consent.privacyCheck": "Я принимаю политику конфиденциальности.",
   "consent.medicalCheck":
@@ -407,6 +410,7 @@ export const AR: Record<string, string> = {
   "consent.body":
     "يجب تأكيد كل موافقة على حدة. بدون تأكيد صريح 18+ يبقى التطبيق مغلقًا. لا تشخيص ولا ضمان.",
   "consent.accept": "دخول التطبيق",
+  "consent.locked": "ضع العلامات الأربع أولاً",
   "consent.agbCheck": "أوافق على الشروط.",
   "consent.privacyCheck": "أوافق على بيان الخصوصية.",
   "consent.medicalCheck":

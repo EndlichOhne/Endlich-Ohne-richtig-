@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,8 @@ import { PROVIDERS } from "@/lib/providers";
 import { KIND_IMG } from "@/lib/covers";
 import { SignedIn, SignedOut } from "@/lib/auth/gates";
 import { useI18n } from "@/lib/i18n";
+import { getPracticeHome } from "@/lib/practice-api";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/")({
   component: Home,
@@ -33,6 +35,14 @@ const KINDS = [
 
 function Home() {
   const { t } = useI18n();
+  const navigate = useNavigate();
+  useEffect(() => {
+    void getPracticeHome()
+      .then((home) => {
+        if (home.session) void navigate({ to: "/praxis" });
+      })
+      .catch(() => undefined);
+  }, [navigate]);
   const STEPS = [
     { n: "01", t: t("home.step1.t"), d: t("home.step1.d"), img: "/images/laser-hq.webp" },
     { n: "02", t: t("home.step2.t"), d: t("home.step2.d"), img: "/images/tattoo.webp" },

@@ -13,6 +13,16 @@ import {
   type BoundaryRole,
   type VerifiedPracticeAccess,
 } from "@/lib/server-boundary";
+import {
+  actionToStatus,
+  applyManualPayment,
+  berlinDay,
+  canAdvanceStatus,
+  isDeskStatus,
+  quoteAllowed,
+  roleAllowsAction,
+  type DeskAction,
+} from "@/lib/practice-desk";
 
 const CLINIC_EMAILS = [BRAND.email, "kontakt@endlich-ohne.de"].map((e) => e.toLowerCase());
 
@@ -245,6 +255,12 @@ async function openSession(userId: string, membershipId: string) {
     )
   `;
   await writeSessionCookie(id, Math.floor(PRACTICE_SESSION_MS / 1000));
+  await writeAudit(sql, {
+    actor: userId,
+    action: "practice_login",
+    locationId: row.location_id,
+    targetId: row.id,
+  });
 }
 
 async function requirePracticeAccess(userId: string, allowedRoles: BoundaryRole[]) {
@@ -1009,7 +1025,7 @@ export const setPracticeAppointmentStatus = createServerFn({ method: "POST" })
     const i = input as { id?: unknown; status?: unknown };
     const id = String(i.id ?? "").slice(0, 80);
     const status = String(i.status ?? "");
-    if (!id || !["planned", "confirmed", "cancelled", "completed"].includes(status)) {
+    if (!id || !isDeskStatus(status)) {
       throw new Error("Nicht gefunden.");
     }
     return { id, status };
@@ -1030,10 +1046,47 @@ export const setPracticeAppointmentStatus = createServerFn({ method: "POST" })
     ) {
       throw new Error("Nicht gefunden.");
     }
+    const current = await sql<{ status: string }>`
+      select status from practice_appointments
+      where id = ${data.id} and location_id = ${session.verified.locationId}
+      limit 1
+    `;
+    if (!current[0] || !canAdvanceStatus(current[0].status, data.status)) {
+      throw new Error("Dieser Statuswechsel ist nicht möglich.");
+    }
+    const actionForStatus: Partial<Record<string, DeskAction>> = {
+      confirmed: "confirm",
+      arrived: "arrive",
+      in_progress: "start",
+      completed: "complete",
+      cancelled: "cancel",
+      no_show: "noshow",
+    };
+    const action = actionForStatus[data.status];
+    if (!action || !roleAllowsAction(session.role, action)) {
+      throw new Error("Keine Berechtigung.");
+    }
     await sql`
-      update practice_appointments set status = ${data.status}
+      update practice_appointments set
+        status = ${data.status},
+        started_at = case
+          when ${data.status} = 'in_progress' and started_at is null then now()
+          else started_at
+        end,
+        completed_at = case when ${data.status} = 'completed' then now() else completed_at end,
+        completed_by = case when ${data.status} = 'completed' then ${context.userId} else completed_by end,
+        payment_status = case
+          when ${data.status} = 'cancelled' and payment_status = 'OPEN' then 'CANCELLED'
+          else payment_status
+        end
       where id = ${data.id} and location_id = ${session.verified.locationId}
     `;
+    await writeAudit(sql, {
+      actor: context.userId,
+      action: "appointment_status",
+      locationId: session.locationId,
+      targetId: data.id,
+    });
     return { ok: true as const };
   });
 
@@ -1106,7 +1159,541 @@ export const endPracticeSession = createServerFn({ method: "POST" })
         update practice_sessions set revoked_at = now()
         where id = ${session.id} and revoked_at is null
       `;
+      await writeAudit(sql, {
+        actor: context.userId,
+        action: "practice_logout",
+        locationId: session.locationId,
+        targetId: session.membershipId,
+      });
     }
     await clearSessionCookie();
     return { ok: true as const };
   });
+
+function likeSafe(value: string) {
+  return `%${value.toLowerCase().replace(/[%_]/g, "")}%`;
+}
+
+async function appointmentAtLocation(locationId: string, id: string) {
+  const sql = await sqlClient();
+  const rows = await sql<{
+    id: string;
+    location_id: string;
+    customer_user_id: string;
+    starts_at: string;
+    status: string;
+    note: string;
+    treatment_note: string;
+    deposit_cents: number;
+    rest_cents: number;
+    paid_cents: number;
+    payment_method: string;
+    payment_status: string;
+    paid_at: string | null;
+    started_at: string | null;
+    completed_at: string | null;
+    name: string | null;
+    email: string | null;
+    assignee_name: string | null;
+  }>`
+    select a.id, a.location_id, a.customer_user_id, a.starts_at, a.status, a.note,
+           a.treatment_note, a.deposit_cents, a.rest_cents, a.paid_cents,
+           a.payment_method, a.payment_status, a.paid_at, a.started_at, a.completed_at,
+           u.name, u.email, d.name as assignee_name
+    from practice_appointments a
+    left join "user" u on u.id = a.customer_user_id
+    left join "user" d on d.id = a.assignee_user_id
+    where a.id = ${id} and a.location_id = ${locationId}
+    limit 1
+  `;
+  return rows[0] ?? null;
+}
+
+export const getPracticeDesk = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor", "staff"]);
+    const sql = await sqlClient();
+    const day = berlinDay();
+    const actor = await sql<{ name: string; email: string }>`
+      select name, email from "user" where id = ${context.userId} limit 1
+    `;
+    const counts = await sql<{
+      appointments: number;
+      completed: number;
+      open_count: number;
+      payments_open: number;
+    }>`
+      select
+        count(*)::int as appointments,
+        count(*) filter (where status = 'completed')::int as completed,
+        count(*) filter (where status not in ('completed', 'cancelled', 'no_show'))::int as open_count,
+        count(*) filter (
+          where payment_status in ('OPEN', 'PARTIAL') and (deposit_cents + rest_cents) > 0
+        )::int as payments_open
+      from practice_appointments
+      where location_id = ${session.locationId} and starts_at like ${`${day}%`}
+    `;
+    const money = await sql<{ cents: number; n: number }>`
+      select coalesce(sum(paid_cents), 0)::int as cents, count(paid_at)::int as n
+      from practice_appointments
+      where location_id = ${session.locationId}
+        and paid_at is not null
+        and to_char(paid_at at time zone 'Europe/Berlin', 'YYYY-MM-DD') = ${day}
+    `;
+    const customers = await sql<{ total: number; fresh: number }>`
+      select
+        count(distinct customer_user_id)::int as total,
+        count(distinct customer_user_id) filter (
+          where to_char(created_at at time zone 'Europe/Berlin', 'YYYY-MM-DD') = ${day}
+        )::int as fresh
+      from practice_appointments
+      where location_id = ${session.locationId}
+    `;
+    const next = await sql<{ id: string; starts_at: string; status: string; name: string | null }>`
+      select a.id, a.starts_at, a.status, u.name
+      from practice_appointments a
+      left join "user" u on u.id = a.customer_user_id
+      where a.location_id = ${session.locationId}
+        and a.starts_at >= ${day}
+        and a.status not in ('completed', 'cancelled', 'no_show')
+      order by a.starts_at asc
+      limit 1
+    `;
+    const row = counts[0];
+    return {
+      role: session.role,
+      locationName: session.locationName,
+      locationCity: session.locationCity,
+      actorName: actor[0]?.name?.trim() || maskEmail(actor[0]?.email ?? ""),
+      day,
+      appointments: Number(row?.appointments ?? 0),
+      completed: Number(row?.completed ?? 0),
+      open: Number(row?.open_count ?? 0),
+      paymentsOpen: Number(row?.payments_open ?? 0),
+      revenueCents: Number(money[0]?.n ?? 0) > 0 ? Number(money[0]?.cents ?? 0) : null,
+      customers: Number(customers[0]?.total ?? 0),
+      newCustomers: Number(customers[0]?.fresh ?? 0),
+      next: next[0]
+        ? {
+            id: next[0].id,
+            startsAt: next[0].starts_at,
+            status: next[0].status,
+            name: next[0].name?.trim() || "Kunde",
+          }
+        : null,
+    };
+  });
+
+export const listPracticeDay = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => {
+    const day = String((input as { day?: unknown })?.day ?? berlinDay()).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error("Nicht gefunden.");
+    return { day };
+  })
+  .handler(async ({ context, data }) => {
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor", "staff"]);
+    const sql = await sqlClient();
+    const rows = await sql<{
+      id: string;
+      starts_at: string;
+      status: string;
+      note: string;
+      name: string | null;
+      assignee_name: string | null;
+      payment_status: string;
+    }>`
+      select a.id, a.starts_at, a.status, a.note, u.name, d.name as assignee_name, a.payment_status
+      from practice_appointments a
+      left join "user" u on u.id = a.customer_user_id
+      left join "user" d on d.id = a.assignee_user_id
+      where a.location_id = ${session.locationId} and a.starts_at like ${`${data.day}%`}
+      order by a.starts_at asc
+      limit 80
+    `;
+    return {
+      day: data.day,
+      items: rows.map((row) => ({
+        id: row.id,
+        startsAt: row.starts_at,
+        status: row.status,
+        note: row.note,
+        name: row.name?.trim() || "Kunde",
+        assignee: row.assignee_name?.trim() || "",
+        paymentStatus: row.payment_status,
+        location: session.locationCity,
+      })),
+    };
+  });
+
+export const searchPracticeDesk = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => {
+    const q = String((input as { q?: unknown })?.q ?? "").trim().slice(0, 40);
+    if (q.length < 2) throw new Error("Bitte mindestens 2 Zeichen.");
+    return { q };
+  })
+  .handler(async ({ context, data }) => {
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor", "staff"]);
+    const sql = await sqlClient();
+    const rows = await sql<{ id: string; starts_at: string; status: string; name: string | null }>`
+      select a.id, a.starts_at, a.status, u.name
+      from practice_appointments a
+      left join "user" u on u.id = a.customer_user_id
+      where a.location_id = ${session.locationId}
+        and (lower(coalesce(u.name, '')) like ${likeSafe(data.q)} or a.id = ${data.q})
+      order by a.starts_at desc
+      limit 8
+    `;
+    return {
+      items: rows.map((row) => ({
+        id: row.id,
+        startsAt: row.starts_at,
+        status: row.status,
+        name: row.name?.trim() || "Kunde",
+      })),
+    };
+  });
+
+export const getPracticeCase = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => {
+    const id = String((input as { id?: unknown })?.id ?? "").slice(0, 80);
+    if (!id) throw new Error("Nicht gefunden.");
+    return { id };
+  })
+  .handler(async ({ context, data }) => {
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor", "staff"]);
+    const row = await appointmentAtLocation(session.locationId, data.id);
+    if (
+      !row ||
+      !decideAppointmentRead({
+        authenticatedUserId: context.userId,
+        verified: session.verified,
+        appointment: { customerUserId: row.customer_user_id, locationId: row.location_id },
+        request: inputClaims(data),
+      })
+    ) {
+      throw new Error("Nicht gefunden.");
+    }
+    const sql = await sqlClient();
+    const tattoos = await sql<{
+      id: string;
+      name: string;
+      kind: string;
+      body_location: string;
+      progress: number;
+    }>`
+      select id, name, kind, body_location, progress
+      from tattoos
+      where user_id = ${row.customer_user_id}
+      order by updated_at desc
+      limit 12
+    `;
+    const sessions = await sql<{ title: string; date: string; notes: string; status: string }>`
+      select title, date, notes, status
+      from tattoo_sessions
+      where user_id = ${row.customer_user_id}
+      order by date desc
+      limit 20
+    `;
+    const receipts = await sql<{
+      created_at: string;
+      deposit_cents: number;
+      rest_cents: number;
+      status: string;
+      method: string;
+      date: string;
+    }>`
+      select created_at, deposit_cents, rest_cents, status, method, date
+      from payment_receipts
+      where user_id = ${row.customer_user_id}
+      order by created_at desc
+      limit 12
+    `;
+    const visits = await sql<{ id: string; starts_at: string; status: string }>`
+      select id, starts_at, status
+      from practice_appointments
+      where customer_user_id = ${row.customer_user_id} and location_id = ${session.locationId}
+      order by starts_at desc
+      limit 30
+    `;
+    return {
+      appointment: publicAppointment(row, session.locationCity),
+      customer: {
+        name: row.name?.trim() || "Kunde",
+        email: row.email ?? "",
+      },
+      tattoos,
+      sessions,
+      receipts,
+      visits: visits.map((visit) => ({
+        id: visit.id,
+        startsAt: visit.starts_at,
+        status: visit.status,
+      })),
+    };
+  });
+
+function inputClaims(_data: { id: string }) {
+  return {};
+}
+
+function publicAppointment(
+  row: NonNullable<Awaited<ReturnType<typeof appointmentAtLocation>>>,
+  city: string,
+) {
+  return {
+    id: row.id,
+    startsAt: row.starts_at,
+    status: row.status,
+    note: row.note,
+    treatmentNote: row.treatment_note,
+    name: row.name?.trim() || "Kunde",
+    assignee: row.assignee_name?.trim() || "",
+    location: city,
+    depositCents: Number(row.deposit_cents),
+    restCents: Number(row.rest_cents),
+    paidCents: Number(row.paid_cents),
+    paymentMethod: row.payment_method,
+    paymentStatus: row.payment_status,
+    paidAt: row.paid_at,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+  };
+}
+
+export const advancePracticeAppointment = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => {
+    const i = input as { id?: unknown; action?: unknown; status?: unknown };
+    const id = String(i.id ?? "").slice(0, 80);
+    const action = String(i.action ?? "");
+    if (!id || !actionToStatus(action)) throw new Error("Nicht gefunden.");
+    return { id, action: action as DeskAction, claimedStatus: i.status };
+  })
+  .handler(async ({ context, data }) => {
+    void data.claimedStatus;
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor", "staff"]);
+    if (!roleAllowsAction(session.role, data.action)) throw new Error("Keine Berechtigung.");
+    const next = actionToStatus(data.action);
+    if (!next) throw new Error("Nicht gefunden.");
+    const row = await appointmentAtLocation(session.locationId, data.id);
+    if (!row || !canAdvanceStatus(row.status, next)) {
+      throw new Error("Dieser Statuswechsel ist nicht möglich.");
+    }
+    const sql = await sqlClient();
+    await sql`
+      update practice_appointments set
+        status = ${next},
+        started_at = case
+          when ${next} = 'in_progress' and started_at is null then now()
+          else started_at
+        end,
+        completed_at = case when ${next} = 'completed' then now() else completed_at end,
+        completed_by = case when ${next} = 'completed' then ${context.userId} else completed_by end,
+        payment_status = case
+          when ${next} = 'cancelled' and payment_status = 'OPEN' then 'CANCELLED'
+          else payment_status
+        end
+      where id = ${data.id} and location_id = ${session.locationId}
+    `;
+    await writeAudit(sql, {
+      actor: context.userId,
+      action: `appointment_${data.action}`,
+      locationId: session.locationId,
+      targetId: data.id,
+    });
+    return { ok: true as const, status: next };
+  });
+
+export const savePracticeNote = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => {
+    const i = input as { id?: unknown; note?: unknown };
+    const id = String(i.id ?? "").slice(0, 80);
+    const note = String(i.note ?? "").slice(0, 1000);
+    if (!id) throw new Error("Nicht gefunden.");
+    return { id, note };
+  })
+  .handler(async ({ context, data }) => {
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor"]);
+    if (!roleAllowsAction(session.role, "note")) throw new Error("Keine Berechtigung.");
+    const row = await appointmentAtLocation(session.locationId, data.id);
+    if (!row) throw new Error("Nicht gefunden.");
+    const sql = await sqlClient();
+    await sql`
+      update practice_appointments set treatment_note = ${data.note}
+      where id = ${data.id} and location_id = ${session.locationId}
+    `;
+    await writeAudit(sql, {
+      actor: context.userId,
+      action: "appointment_note",
+      locationId: session.locationId,
+      targetId: data.id,
+    });
+    return { ok: true as const };
+  });
+
+export const setPracticeQuote = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => {
+    const i = input as { id?: unknown; depositCents?: unknown; restCents?: unknown };
+    const id = String(i.id ?? "").slice(0, 80);
+    const depositCents = Number(i.depositCents);
+    const restCents = Number(i.restCents);
+    if (!id) throw new Error("Nicht gefunden.");
+    return { id, depositCents, restCents };
+  })
+  .handler(async ({ context, data }) => {
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor", "staff"]);
+    if (!roleAllowsAction(session.role, "quote")) throw new Error("Keine Berechtigung.");
+    const row = await appointmentAtLocation(session.locationId, data.id);
+    if (!row || !quoteAllowed(data.depositCents, data.restCents, Number(row.paid_cents))) {
+      throw new Error("Betrag nicht möglich.");
+    }
+    const sql = await sqlClient();
+    const status = row.status === "cancelled" ? "CANCELLED" : "OPEN";
+    await sql`
+      update practice_appointments set
+        deposit_cents = ${data.depositCents},
+        rest_cents = ${data.restCents},
+        payment_status = case
+          when ${status} = 'CANCELLED' then 'CANCELLED'
+          when paid_cents <= 0 then 'OPEN'
+          when paid_cents >= ${data.depositCents + data.restCents} then 'PAID'
+          else 'PARTIAL'
+        end
+      where id = ${data.id} and location_id = ${session.locationId}
+    `;
+    await writeAudit(sql, {
+      actor: context.userId,
+      action: "appointment_quote",
+      locationId: session.locationId,
+      targetId: data.id,
+    });
+    return { ok: true as const };
+  });
+
+export const recordPracticePayment = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: unknown) => {
+    const i = input as { id?: unknown; cents?: unknown; method?: unknown; status?: unknown };
+    const id = String(i.id ?? "").slice(0, 80);
+    const cents = Number(i.cents);
+    const method = String(i.method ?? "");
+    if (!id) throw new Error("Nicht gefunden.");
+    return { id, cents, method, claimedStatus: i.status };
+  })
+  .handler(async ({ context, data }) => {
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor", "staff"]);
+    if (!roleAllowsAction(session.role, "pay")) throw new Error("Keine Berechtigung.");
+    const row = await appointmentAtLocation(session.locationId, data.id);
+    if (!row) throw new Error("Nicht gefunden.");
+    const applied = applyManualPayment({
+      depositCents: Number(row.deposit_cents),
+      restCents: Number(row.rest_cents),
+      paidCents: Number(row.paid_cents),
+      addCents: data.cents,
+      method: data.method,
+      claimedStatus: data.claimedStatus,
+    });
+    if (!applied.ok) {
+      if (applied.reason === "stripe") throw new Error("Stripe-Zahlungen laufen über den Checkout.");
+      if (applied.reason === "no-quote") throw new Error("Zuerst Anzahlung und Restbetrag hinterlegen.");
+      throw new Error("Zahlung nicht möglich.");
+    }
+    const sql = await sqlClient();
+    await sql`
+      update practice_appointments set
+        paid_cents = ${applied.paidCents},
+        payment_status = ${applied.status},
+        payment_method = ${data.method},
+        paid_at = now()
+      where id = ${data.id} and location_id = ${session.locationId}
+    `;
+    await writeAudit(sql, {
+      actor: context.userId,
+      action: "appointment_payment",
+      locationId: session.locationId,
+      targetId: data.id,
+    });
+    return { ok: true as const, status: applied.status };
+  });
+
+export const listPracticePayments = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor", "staff"]);
+    const sql = await sqlClient();
+    const rows = await sql<{
+      id: string;
+      starts_at: string;
+      name: string | null;
+      deposit_cents: number;
+      rest_cents: number;
+      paid_cents: number;
+      payment_status: string;
+      payment_method: string;
+      paid_at: string | null;
+    }>`
+      select a.id, a.starts_at, u.name, a.deposit_cents, a.rest_cents, a.paid_cents,
+             a.payment_status, a.payment_method, a.paid_at
+      from practice_appointments a
+      left join "user" u on u.id = a.customer_user_id
+      where a.location_id = ${session.locationId}
+        and (a.deposit_cents + a.rest_cents) > 0
+      order by a.starts_at desc
+      limit 40
+    `;
+    return {
+      items: rows.map((row) => ({
+        id: row.id,
+        startsAt: row.starts_at,
+        name: row.name?.trim() || "Kunde",
+        depositCents: Number(row.deposit_cents),
+        restCents: Number(row.rest_cents),
+        paidCents: Number(row.paid_cents),
+        paymentStatus: row.payment_status,
+        paymentMethod: row.payment_method,
+        paidAt: row.paid_at,
+      })),
+    };
+  });
+
+export const listPracticeAudit = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const session = await requireAdmin(context.userId);
+    const sql = await sqlClient();
+    const rows = await sql<{ action: string; created_at: string; target_id: string | null }>`
+      select action, created_at, target_id
+      from practice_audit
+      where location_id = ${session.locationId}
+      order by created_at desc
+      limit 30
+    `;
+    const sessions = await sql<{ email: string | null; expires_at: string }>`
+      select u.email, s.expires_at
+      from practice_sessions s
+      join "user" u on u.id = s.user_id
+      where s.location_id = ${session.locationId}
+        and s.revoked_at is null
+        and s.expires_at > now()
+      order by s.expires_at asc
+      limit 20
+    `;
+    return {
+      events: rows.map((row) => ({
+        action: row.action,
+        at: row.created_at,
+        target: row.target_id ? row.target_id.slice(0, 12) : "",
+      })),
+      sessions: sessions.map((row) => ({
+        emailMasked: maskEmail(row.email ?? ""),
+        expiresAt: row.expires_at,
+      })),
+    };
+  });
+

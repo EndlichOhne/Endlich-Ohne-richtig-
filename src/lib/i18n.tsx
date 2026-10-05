@@ -30,6 +30,7 @@ const DE: Record<string, string> = {
   "consent.body":
     "Jede Zustimmung muss einzeln bestätigt werden. Ohne ausdrückliche 18+-Bestätigung bleibt die App geschlossen. Keine Diagnose, keine Garantie.",
   "consent.accept": "App betreten",
+  "consent.locked": "Zuerst alle 4 Haken setzen",
   "consent.agbCheck": "Ich akzeptiere die AGB.",
   "consent.privacyCheck": "Ich akzeptiere die Datenschutzerklärung.",
   "consent.medicalCheck":

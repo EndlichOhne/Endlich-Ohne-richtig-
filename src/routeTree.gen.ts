@@ -48,6 +48,10 @@ import { Route as ErgebnisseIndexRouteImport } from './routes/ergebnisse.index'
 import { Route as ErgebnisseIdRouteImport } from './routes/ergebnisse.$id'
 import { Route as ErgebnisseMeineRouteImport } from './routes/ergebnisse.meine'
 import { Route as ErgebnisseTeilenRouteImport } from './routes/ergebnisse.teilen'
+import { Route as PraxisIndexRouteImport } from './routes/praxis.index'
+import { Route as PraxisKalenderRouteImport } from './routes/praxis.kalender'
+import { Route as PraxisVerwaltungRouteImport } from './routes/praxis.verwaltung'
+import { Route as PraxisZahlungenRouteImport } from './routes/praxis.zahlungen'
 import { Route as ProAbbruchRouteImport } from './routes/pro.abbruch'
 import { Route as ProErfolgRouteImport } from './routes/pro.erfolg'
 import { Route as WissenIndexRouteImport } from './routes/wissen.index'
@@ -58,6 +62,8 @@ import { Route as ZahlungAbbruchRouteImport } from './routes/zahlung.abbruch'
 import { Route as ZahlungErfolgRouteImport } from './routes/zahlung.erfolg'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api.stripe.webhook'
+import { Route as PraxisAkteIdRouteImport } from './routes/praxis.akte.$id'
+import { Route as PraxisTerminIdRouteImport } from './routes/praxis.termin.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -254,6 +260,26 @@ const ErgebnisseTeilenRoute = ErgebnisseTeilenRouteImport.update({
   path: '/teilen',
   getParentRoute: () => ErgebnisseRoute,
 } as any)
+const PraxisIndexRoute = PraxisIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PraxisRoute,
+} as any)
+const PraxisKalenderRoute = PraxisKalenderRouteImport.update({
+  id: '/kalender',
+  path: '/kalender',
+  getParentRoute: () => PraxisRoute,
+} as any)
+const PraxisVerwaltungRoute = PraxisVerwaltungRouteImport.update({
+  id: '/verwaltung',
+  path: '/verwaltung',
+  getParentRoute: () => PraxisRoute,
+} as any)
+const PraxisZahlungenRoute = PraxisZahlungenRouteImport.update({
+  id: '/zahlungen',
+  path: '/zahlungen',
+  getParentRoute: () => PraxisRoute,
+} as any)
 const ProAbbruchRoute = ProAbbruchRouteImport.update({
   id: '/abbruch',
   path: '/abbruch',
@@ -304,6 +330,16 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PraxisAkteIdRoute = PraxisAkteIdRouteImport.update({
+  id: '/akte/$id',
+  path: '/akte/$id',
+  getParentRoute: () => PraxisRoute,
+} as any)
+const PraxisTerminIdRoute = PraxisTerminIdRouteImport.update({
+  id: '/termin/$id',
+  path: '/termin/$id',
+  getParentRoute: () => PraxisRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -327,7 +363,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mehr': typeof MehrRoute
   '/planer': typeof PlanerRoute
-  '/praxis': typeof PraxisRoute
+  '/praxis': typeof PraxisRouteWithChildren
   '/preise': typeof PreiseRoute
   '/pro': typeof ProRouteWithChildren
   '/pruefung': typeof PruefungRoute
@@ -342,6 +378,9 @@ export interface FileRoutesByFullPath {
   '/ergebnisse/$id': typeof ErgebnisseIdRoute
   '/ergebnisse/meine': typeof ErgebnisseMeineRoute
   '/ergebnisse/teilen': typeof ErgebnisseTeilenRoute
+  '/praxis/kalender': typeof PraxisKalenderRoute
+  '/praxis/verwaltung': typeof PraxisVerwaltungRoute
+  '/praxis/zahlungen': typeof PraxisZahlungenRoute
   '/pro/abbruch': typeof ProAbbruchRoute
   '/pro/erfolg': typeof ProErfolgRoute
   '/wissen/$slug': typeof WissenSlugRoute
@@ -351,10 +390,13 @@ export interface FileRoutesByFullPath {
   '/akte/': typeof AkteIndexRoute
   '/anbieter/': typeof AnbieterIndexRoute
   '/ergebnisse/': typeof ErgebnisseIndexRoute
+  '/praxis/': typeof PraxisIndexRoute
   '/wissen/': typeof WissenIndexRoute
   '/zahlung/': typeof ZahlungIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/praxis/akte/$id': typeof PraxisAkteIdRoute
+  '/praxis/termin/$id': typeof PraxisTerminIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -375,7 +417,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mehr': typeof MehrRoute
   '/planer': typeof PlanerRoute
-  '/praxis': typeof PraxisRoute
   '/preise': typeof PreiseRoute
   '/pro': typeof ProRouteWithChildren
   '/pruefung': typeof PruefungRoute
@@ -388,6 +429,9 @@ export interface FileRoutesByTo {
   '/ergebnisse/$id': typeof ErgebnisseIdRoute
   '/ergebnisse/meine': typeof ErgebnisseMeineRoute
   '/ergebnisse/teilen': typeof ErgebnisseTeilenRoute
+  '/praxis/kalender': typeof PraxisKalenderRoute
+  '/praxis/verwaltung': typeof PraxisVerwaltungRoute
+  '/praxis/zahlungen': typeof PraxisZahlungenRoute
   '/pro/abbruch': typeof ProAbbruchRoute
   '/pro/erfolg': typeof ProErfolgRoute
   '/wissen/$slug': typeof WissenSlugRoute
@@ -397,10 +441,13 @@ export interface FileRoutesByTo {
   '/akte': typeof AkteIndexRoute
   '/anbieter': typeof AnbieterIndexRoute
   '/ergebnisse': typeof ErgebnisseIndexRoute
+  '/praxis': typeof PraxisIndexRoute
   '/wissen': typeof WissenIndexRoute
   '/zahlung': typeof ZahlungIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/praxis/akte/$id': typeof PraxisAkteIdRoute
+  '/praxis/termin/$id': typeof PraxisTerminIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -425,7 +472,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mehr': typeof MehrRoute
   '/planer': typeof PlanerRoute
-  '/praxis': typeof PraxisRoute
+  '/praxis': typeof PraxisRouteWithChildren
   '/preise': typeof PreiseRoute
   '/pro': typeof ProRouteWithChildren
   '/pruefung': typeof PruefungRoute
@@ -440,6 +487,9 @@ export interface FileRoutesById {
   '/ergebnisse/$id': typeof ErgebnisseIdRoute
   '/ergebnisse/meine': typeof ErgebnisseMeineRoute
   '/ergebnisse/teilen': typeof ErgebnisseTeilenRoute
+  '/praxis/kalender': typeof PraxisKalenderRoute
+  '/praxis/verwaltung': typeof PraxisVerwaltungRoute
+  '/praxis/zahlungen': typeof PraxisZahlungenRoute
   '/pro/abbruch': typeof ProAbbruchRoute
   '/pro/erfolg': typeof ProErfolgRoute
   '/wissen/$slug': typeof WissenSlugRoute
@@ -449,10 +499,13 @@ export interface FileRoutesById {
   '/akte/': typeof AkteIndexRoute
   '/anbieter/': typeof AnbieterIndexRoute
   '/ergebnisse/': typeof ErgebnisseIndexRoute
+  '/praxis/': typeof PraxisIndexRoute
   '/wissen/': typeof WissenIndexRoute
   '/zahlung/': typeof ZahlungIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/praxis/akte/$id': typeof PraxisAkteIdRoute
+  '/praxis/termin/$id': typeof PraxisTerminIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -493,6 +546,9 @@ export interface FileRouteTypes {
     | '/ergebnisse/$id'
     | '/ergebnisse/meine'
     | '/ergebnisse/teilen'
+    | '/praxis/kalender'
+    | '/praxis/verwaltung'
+    | '/praxis/zahlungen'
     | '/pro/abbruch'
     | '/pro/erfolg'
     | '/wissen/$slug'
@@ -502,10 +558,13 @@ export interface FileRouteTypes {
     | '/akte/'
     | '/anbieter/'
     | '/ergebnisse/'
+    | '/praxis/'
     | '/wissen/'
     | '/zahlung/'
     | '/api/auth/$'
     | '/api/stripe/webhook'
+    | '/praxis/akte/$id'
+    | '/praxis/termin/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -526,7 +585,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/mehr'
     | '/planer'
-    | '/praxis'
     | '/preise'
     | '/pro'
     | '/pruefung'
@@ -539,6 +597,9 @@ export interface FileRouteTypes {
     | '/ergebnisse/$id'
     | '/ergebnisse/meine'
     | '/ergebnisse/teilen'
+    | '/praxis/kalender'
+    | '/praxis/verwaltung'
+    | '/praxis/zahlungen'
     | '/pro/abbruch'
     | '/pro/erfolg'
     | '/wissen/$slug'
@@ -548,10 +609,13 @@ export interface FileRouteTypes {
     | '/akte'
     | '/anbieter'
     | '/ergebnisse'
+    | '/praxis'
     | '/wissen'
     | '/zahlung'
     | '/api/auth/$'
     | '/api/stripe/webhook'
+    | '/praxis/akte/$id'
+    | '/praxis/termin/$id'
   id:
     | '__root__'
     | '/'
@@ -590,6 +654,9 @@ export interface FileRouteTypes {
     | '/ergebnisse/$id'
     | '/ergebnisse/meine'
     | '/ergebnisse/teilen'
+    | '/praxis/kalender'
+    | '/praxis/verwaltung'
+    | '/praxis/zahlungen'
     | '/pro/abbruch'
     | '/pro/erfolg'
     | '/wissen/$slug'
@@ -599,10 +666,13 @@ export interface FileRouteTypes {
     | '/akte/'
     | '/anbieter/'
     | '/ergebnisse/'
+    | '/praxis/'
     | '/wissen/'
     | '/zahlung/'
     | '/api/auth/$'
     | '/api/stripe/webhook'
+    | '/praxis/akte/$id'
+    | '/praxis/termin/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -627,7 +697,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MehrRoute: typeof MehrRoute
   PlanerRoute: typeof PlanerRoute
-  PraxisRoute: typeof PraxisRoute
+  PraxisRoute: typeof PraxisRouteWithChildren
   PreiseRoute: typeof PreiseRoute
   ProRoute: typeof ProRouteWithChildren
   PruefungRoute: typeof PruefungRoute
@@ -916,6 +986,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ErgebnisseTeilenRouteImport
       parentRoute: typeof ErgebnisseRoute
     }
+    '/praxis/': {
+      id: '/praxis/'
+      path: '/'
+      fullPath: '/praxis/'
+      preLoaderRoute: typeof PraxisIndexRouteImport
+      parentRoute: typeof PraxisRoute
+    }
+    '/praxis/kalender': {
+      id: '/praxis/kalender'
+      path: '/kalender'
+      fullPath: '/praxis/kalender'
+      preLoaderRoute: typeof PraxisKalenderRouteImport
+      parentRoute: typeof PraxisRoute
+    }
+    '/praxis/verwaltung': {
+      id: '/praxis/verwaltung'
+      path: '/verwaltung'
+      fullPath: '/praxis/verwaltung'
+      preLoaderRoute: typeof PraxisVerwaltungRouteImport
+      parentRoute: typeof PraxisRoute
+    }
+    '/praxis/zahlungen': {
+      id: '/praxis/zahlungen'
+      path: '/zahlungen'
+      fullPath: '/praxis/zahlungen'
+      preLoaderRoute: typeof PraxisZahlungenRouteImport
+      parentRoute: typeof PraxisRoute
+    }
     '/pro/abbruch': {
       id: '/pro/abbruch'
       path: '/abbruch'
@@ -986,6 +1084,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/praxis/akte/$id': {
+      id: '/praxis/akte/$id'
+      path: '/akte/$id'
+      fullPath: '/praxis/akte/$id'
+      preLoaderRoute: typeof PraxisAkteIdRouteImport
+      parentRoute: typeof PraxisRoute
+    }
+    '/praxis/termin/$id': {
+      id: '/praxis/termin/$id'
+      path: '/termin/$id'
+      fullPath: '/praxis/termin/$id'
+      preLoaderRoute: typeof PraxisTerminIdRouteImport
+      parentRoute: typeof PraxisRoute
+    }
   }
 }
 
@@ -1032,6 +1144,27 @@ const ErgebnisseRouteChildren: ErgebnisseRouteChildren = {
 const ErgebnisseRouteWithChildren = ErgebnisseRoute._addFileChildren(
   ErgebnisseRouteChildren,
 )
+
+interface PraxisRouteChildren {
+  PraxisKalenderRoute: typeof PraxisKalenderRoute
+  PraxisVerwaltungRoute: typeof PraxisVerwaltungRoute
+  PraxisZahlungenRoute: typeof PraxisZahlungenRoute
+  PraxisIndexRoute: typeof PraxisIndexRoute
+  PraxisAkteIdRoute: typeof PraxisAkteIdRoute
+  PraxisTerminIdRoute: typeof PraxisTerminIdRoute
+}
+
+const PraxisRouteChildren: PraxisRouteChildren = {
+  PraxisKalenderRoute: PraxisKalenderRoute,
+  PraxisVerwaltungRoute: PraxisVerwaltungRoute,
+  PraxisZahlungenRoute: PraxisZahlungenRoute,
+  PraxisIndexRoute: PraxisIndexRoute,
+  PraxisAkteIdRoute: PraxisAkteIdRoute,
+  PraxisTerminIdRoute: PraxisTerminIdRoute,
+}
+
+const PraxisRouteWithChildren =
+  PraxisRoute._addFileChildren(PraxisRouteChildren)
 
 interface ProRouteChildren {
   ProAbbruchRoute: typeof ProAbbruchRoute
@@ -1097,7 +1230,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MehrRoute: MehrRoute,
   PlanerRoute: PlanerRoute,
-  PraxisRoute: PraxisRoute,
+  PraxisRoute: PraxisRouteWithChildren,
   PreiseRoute: PreiseRoute,
   ProRoute: ProRouteWithChildren,
   PruefungRoute: PruefungRoute,

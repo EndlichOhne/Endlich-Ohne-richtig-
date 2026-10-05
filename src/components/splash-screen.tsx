@@ -13,8 +13,8 @@ const ASSETS = [
   "/images/hero-mobile.webp",
 ] as const;
 
-const MIN_MS = 1500;
-const MAX_MS = 2800;
+const MIN_MS = 400;
+const MAX_MS = 900;
 const FONT_MS = 400;
 
 function reducedMotion() {
@@ -38,13 +38,7 @@ function preload(src: string, signal: AbortSignal) {
     };
     signal.addEventListener("abort", done, { once: true });
     img.decoding = "async";
-    img.onload = () => {
-      if (typeof img.decode === "function") {
-        void img.decode().then(done, done);
-      } else {
-        done();
-      }
-    };
+    img.onload = done;
     img.onerror = done;
     img.src = src;
     if (img.complete && img.naturalWidth > 0) done();
