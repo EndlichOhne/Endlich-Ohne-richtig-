@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { BRAND } from "@/lib/brand";
 import { SignedIn, SignedOut } from "@/lib/auth/gates";
 import { authEnabled, signOut } from "@/lib/auth/client";
-import { bootstrapClinicAdmin, endPracticeSession, getPracticeHome } from "@/lib/practice-api";
+import { bootstrapClinicAdmin, endPracticeSession, getPracticeHome, redeemPracticeCode } from "@/lib/practice-api";
 import { PracticeNav } from "@/components/practice-ui";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/praxis")({
   component: PraxisLayout,
@@ -16,6 +17,7 @@ function PraxisLayout() {
   const navigate = useNavigate();
   const [home, setHome] = useState<Awaited<ReturnType<typeof getPracticeHome>> | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [code, setCode] = useState("");
 
   useEffect(() => {
     void getPracticeHome()
@@ -46,7 +48,20 @@ function PraxisLayout() {
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
         {home && !home.session ? (
           <div className="space-y-3">
-            <p className="text-sm">Deine Praxis-Sitzung ist abgelaufen. Bitte erneut anmelden.</p>
+            <p className="text-sm">Für den Praxisbereich brauchst du dein Konto und einen gültigen Praxiscode. Die Sitzung gilt acht Stunden.</p>
+            <form
+              className="space-y-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setError(null);
+                void redeemPracticeCode({ data: { code } })
+                  .then(() => getPracticeHome().then(setHome))
+                  .catch((err) => setError(err instanceof Error ? err.message : "Code ungültig oder gesperrt."));
+              }}
+            >
+              <Input value={code} onChange={(event) => setCode(event.target.value)} placeholder="Praxiscode" autoComplete="off" />
+              <Button type="submit">Praxis öffnen</Button>
+            </form>
             <Button asChild>
               <Link to="/login">Erneut anmelden</Link>
             </Button>
