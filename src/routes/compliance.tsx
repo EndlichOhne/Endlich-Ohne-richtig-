@@ -36,7 +36,7 @@ const LEGAL = [
   "App-Store- und Play-Datenschutzlabels",
   "Widerrufsbelehrung für Anzahlungen (Entwurf)",
   "Echter Zahlungsdienst (PSP), PCI, Widerrufsbelehrung für Anzahlungen",
-  "Altersfreigabe 16+ (App/Konto), Behandlung vor Ort gesondert prüfen, Support-URL, Privacy-URL",
+  "Altersfreigabe 18+ (App/Konto), Behandlung vor Ort gesondert prüfen, Support-URL, Privacy-URL",
   "Apple Developer / Google Play Konto der Praxis, AGB der Stores",
   "Native Hülle: Capacitor auf einem Mac, Review-Risiko Guideline 4.2",
 ];

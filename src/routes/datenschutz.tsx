@@ -44,7 +44,7 @@ function DatenschutzPage() {
         Bei Registrierung oder Anmeldung (E-Mail/Passwort, Google oder X): Name,
         E-Mail, Authentifizierungsdaten sowie von dir angelegte Akte-Metadaten
         (ohne Foto). Zweck: Bereitstellung von Planer, Belegen und Tattoo-Akte,
-        Altersgrenze 16 (App/Konto; Behandlung vor Ort gesondert). Nach
+        Altersgrenze 18 (App/Konto; Behandlung vor Ort gesondert). Nach
         E-Mail/Passwort-Registrierung senden wir einmalig einen Bestätigungscode
         an die angegebene Adresse (kein Newsletter). Wegwerf-Adressen werden
         abgelehnt. Speicherdauer: bis Kontolöschung. Kontolöschung: Profil →

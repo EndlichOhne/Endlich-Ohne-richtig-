@@ -14,9 +14,9 @@ Deutsche PWA für die ärztliche Laser-Tattooentfernung (Marke ENDLICH OHNE, Fil
 ## Produktregeln (nicht brechen)
 
 - Keine Diagnose, kein Heilversprechen, keine Garantie, keine typischen Ergebnisse
-- App/Konto ab 16; Behandlung vor Ort oft 18
+- App/Konto ab 18; Behandlung vor Ort entscheidet die Praxis
 - Rechtstexte sind **Entwürfe** (`LegalDraftBanner`)
-- Consent-Gate: ein Button „Ich akzeptiere alles und weiter“ — setzt nur Pflicht (AGB, Datenschutz gelesen, medizinischer Hinweis, Alter 16+). Optional (Standort, Erinnerungen) bleibt aus
+- Consent-Gate: AGB, Datenschutz, medizinischer Hinweis und 18+ müssen einzeln bestätigt werden. Optional (Standort, Erinnerungen) bleibt aus
 - Keine Google-Fonts vom CDN (lokal: `public/fonts/`)
 - Bottom-Nav: Home, Akte, Check, Termine, Mehr — nicht zerstören
 - Galerie „Echte Ergebnisse“: Demo gekennzeichnet, Slider, Filter, Upload mit Einwilligung, Moderation

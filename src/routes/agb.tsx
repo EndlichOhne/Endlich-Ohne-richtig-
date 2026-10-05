@@ -71,10 +71,9 @@ function AgbPage() {
         oder Google/X). Das Konto speichert Termine, Zahlungsbelege ohne
         Kartennummer und Metadaten der Tattoo-Akte (ohne Fotos). Check-Antworten
         und Fotos werden in dieser Version nicht serverseitig gespeichert. Die
-        Registrierung und der Check sind ab 16 Jahren zulässig. Behandlungen vor
-        Ort können ein höheres Alter (häufig 18) oder die Einwilligung der
-        Sorgeberechtigten voraussetzen – das entscheidet die Praxis, nicht die
-        App. Ein Konto kann unter Profil gelöscht werden; Zahlungen bei Stripe
+        Registrierung und der Check sind ab 18 Jahren zulässig. Ob eine
+        Behandlung vor Ort möglich ist, entscheidet die Praxis nach ärztlicher
+        und gesetzlicher Vorgabe, nicht die App. Ein Konto kann unter Profil gelöscht werden; Zahlungen bei Stripe
         bleiben davon unberührt (Widerruf gesondert). Rechtliche Prüfung
         erforderlich.
       </P>

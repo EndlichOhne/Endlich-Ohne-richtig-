@@ -117,9 +117,7 @@ Konkrete Karenzzeiten nennt der Betrieb. Die App setzt keine Frist.`,
   {
     id: "alter",
     keys: /16|18|minderjähr|alter|kind|jugend/i,
-    text: `Die App ist ab 16 Jahren nutzbar (Konto + Check). Ob und unter welchen Bedingungen eine Behandlung vor Ort möglich ist, richtet sich nach ärztlicher und gesetzlicher Vorgabe – das ist nicht automatisch dasselbe wie die App-Nutzung.
-
-Bei unter 18: Einwilligung der Sorgeberechtigten kann vor Ort nötig sein. Keine Behandlung über die App.`,
+    text: `Die App ist ab 18 Jahren nutzbar (Konto und Check). Ob eine Behandlung vor Ort möglich ist, richtet sich nach ärztlicher und gesetzlicher Vorgabe. Das entscheidet die Praxis, nicht die App. Keine Diagnose, keine Garantie.`,
   },
   {
     id: "datenschutz",

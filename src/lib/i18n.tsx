@@ -271,7 +271,7 @@ Object.assign(DE, {
   "home.statPromise": "Heilversprechen",
   "home.accountKicker": "Konto",
   "home.accountTitle": "Anmelden, dann einschätzen",
-  "home.accountLead": "Registrierung ab 16. Check bleibt lokal. Planer und Belege im Konto.",
+  "home.accountLead": "Registrierung ab 18. Check bleibt lokal. Planer und Belege im Konto.",
   "home.register": "Registrieren",
   "home.akteKicker": "Akte",
   "home.akteTitle": "Fortschritt dokumentieren",

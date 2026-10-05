@@ -164,6 +164,7 @@ export const EN: Record<string, string> = {
   "home.statPromise": "cure claims",
   "home.accountKicker": "Account",
   "home.accountTitle": "Sign in, then estimate",
+  "home.accountLead": "Registration from 18. The check stays on this device. Planner and receipts stay in the account.",
   "home.register": "Register",
   "home.akteKicker": "File",
   "home.akteTitle": "Document progress",
@@ -233,6 +234,7 @@ export const TR: Record<string, string> = {
   "consent.medicalCheck":
     "Tıbbi uyarıyı okudum: teşhis yok, iyileşme sözü yok, garanti yok.",
   "consent.age18": "En az 18 yaşında olduğumu onaylıyorum.",
+  "home.accountLead": "Kayıt 18 yaşından itibaren. Kontrol bu cihazda kalır. Plan ve makbuzlar hesapta.",
   "consent.agb": "Şartlar",
   "consent.privacy": "Gizlilik",
   "consent.notes": "Notlar",
@@ -321,6 +323,7 @@ export const RU: Record<string, string> = {
   "consent.medicalCheck":
     "Я прочитал медицинское уведомление: без диагноза, без обещания излечения, без гарантии.",
   "consent.age18": "Я подтверждаю, что мне не меньше 18 лет.",
+  "home.accountLead": "Регистрация с 18 лет. Проверка остаётся на устройстве. План и квитанции — в аккаунте.",
   "consent.agb": "Условия",
   "consent.privacy": "Конфиденциальность",
   "consent.notes": "Заметки",
@@ -409,6 +412,7 @@ export const AR: Record<string, string> = {
   "consent.medicalCheck":
     "قرأت التنبيه الطبي: لا تشخيص، ولا وعد بالشفاء، ولا ضمان.",
   "consent.age18": "أؤكد أن عمري 18 عامًا على الأقل.",
+  "home.accountLead": "التسجيل من 18 عامًا. يبقى التقدير على هذا الجهاز. الخطة والإيصالات في الحساب.",
   "consent.agb": "الشروط",
   "consent.privacy": "الخصوصية",
   "consent.notes": "تنبيهات",

@@ -85,7 +85,7 @@ function LoginPage() {
         </>
       )}
       <ul className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
-        <li className="rounded-xl bg-card px-3 py-2 shadow-[var(--shadow-border)]">Ab 16 Jahren</li>
+        <li className="rounded-xl bg-card px-3 py-2 shadow-[var(--shadow-border)]">Ab 18 Jahren</li>
         <li className="rounded-xl bg-card px-3 py-2 shadow-[var(--shadow-border)]">Check nur lokal</li>
         <li className="rounded-xl bg-card px-3 py-2 shadow-[var(--shadow-border)]">Kein Heilversprechen</li>
       </ul>
@@ -272,11 +272,11 @@ function SignUpForm() {
         label="Ich habe die Datenschutzerklärung (Entwurf) gelesen."
       />
       <ConsentCheck
-        id="r-16"
+        id="r-18"
         checked={age18}
         onChange={setAge18}
         required
-        label="Ich bin mindestens 16 Jahre alt."
+        label="Ich bin mindestens 18 Jahre alt."
       />
       <ConsentCheck
         id="r-med"

@@ -8,7 +8,7 @@ export const STORE = {
     "Ärztliche Laser-Tattooentfernung: Orientierung zu Aufwand, Sitzungen und Standorten. Keine Diagnose.",
   keywords:
     "Tattooentfernung, PMU entfernen, Microblading, Laser, Cover-up, Beratung Karlsruhe",
-  age: "16+ / 17+ (US) — rechtliche Prüfung vor Einreichung",
+  age: "18+ — rechtliche Prüfung vor Einreichung",
   category: "Gesundheit und Fitness / Medical (ohne Diagnose-Claim)",
   support: BRAND.email,
   privacyUrl: `${BRAND.site}/datenschutz`,
@@ -21,7 +21,7 @@ export const STORE = {
     `Filiale im Briefing: ${BRAND.praxis}, ${BRAND.street}, ${BRAND.zip} ${BRAND.city}.`,
   ].join("\n\n"),
   whatsNew:
-    "Konto (16+), 3D-Körpermodell, sichere Anzahlung über Stripe. Check bleibt lokal. Rechtstexte als Entwurf.",
+    "Konto (18+), 3D-Körpermodell, sichere Anzahlung über Stripe. Check bleibt lokal. Rechtstexte als Entwurf.",
   privacyLabels: [
     "Konto (E-Mail). Check und Fotos nicht mit uns verknüpft",
     "Gesundheitsangaben nur lokal, optional, löschbar",
