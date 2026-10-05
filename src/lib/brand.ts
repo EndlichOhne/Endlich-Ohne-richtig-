@@ -1,0 +1,18 @@
+export const BRAND = {
+  name: "ENDLICH OHNE",
+  tagline: "Ärztliche Laser-Tattooentfernung",
+  hero: "Tattoo entfernen. Informiert entscheiden.",
+  site: "https://www.endlich-ohne.de",
+  email: "karlsruhe@endlich-ohne.de",
+  dsb: "Leoni Raab, kontakt@endlich-ohne.de",
+  praxis: "Ärztliche Ästhetikpraxis Dr. med. Ilyas Geppo",
+  street: "Kaiserstraße 86",
+  zip: "76133",
+  city: "Karlsruhe",
+  phoneDisplay: "0721 83066666",
+  phoneHref: "tel:+4972183066666",
+  zentrale: "Dr. Goeman Ästhetik GmbH, Waiblingen",
+  updated: "2026-08-31",
+  avatar: "/brand/avatar.webp",
+  profile: "/brand/profile.webp",
+} as const;

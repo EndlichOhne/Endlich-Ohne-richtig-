@@ -1,0 +1,19 @@
+Lies zuerst CHATGPT.md in diesem ZIP, danach DATEIEN.txt.
+
+Das ist der komplette, aktuelle Quellcode der App „ENDLICH OHNE“ (ärztliche Laser-Tattooentfernung, Praxis Dr. med. Ilyas Geppo, Kaiserstraße 86, 76133 Karlsruhe). Stand 22. September 2026. Nicht der alte Export von Anfang September.
+
+Stack: React 19, TypeScript, TanStack Start, Tailwind v4, Better Auth, PGLite/Postgres, Stripe.
+
+Regeln:
+- Bestehende Seiten, Navigation und Funktionen nicht löschen.
+- Startseiten-Hero bleibt das echte Kaiserstraße-Foto.
+- Markenfilm nur auf PRO, PRO-Teaser und KI-Vorschau. Logo nur als /brand/logo-white.svg, nie neu generiert.
+- Sprachen: Deutsch, Englisch, Türkisch, Russisch, Arabisch. Kein Italienisch.
+- Preise: Einzel-Scan 0,50 €, PRO 3,99 €/Monat, PRO 22 €/Jahr, Anzahlung 25 %.
+- Keine Diagnose, keine Garantie, keine Heilversprechen.
+- Deutsch ist rechtlich maßgeblich.
+- Wenn du etwas änderst, nenne die Datei und den vollständigen neuen Code.
+
+node_modules ist nicht dabei. Lokal: npm install, dann npm run dev (Port 8080).
+
+Ich sage dir als Nächstes, was du ändern sollst.

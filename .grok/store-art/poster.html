@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: Outfit;
+        font-weight: 400 700;
+        src: url("./outfit.woff2") format("woff2");
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; background: #071617; }
+      body {
+        font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+        color: #f3f8f8;
+        overflow: hidden;
+      }
+      .frame {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #071617;
+      }
+      .photo {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 10%;
+      }
+      .veil {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(
+            to top,
+            rgb(7 22 23 / 0.97) 0%,
+            rgb(7 22 23 / 0.78) 26%,
+            rgb(7 22 23 / 0.18) 52%,
+            rgb(7 22 23 / 0.42) 100%
+          );
+      }
+      .inner {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 100%;
+        height: 100%;
+        padding: 9.2vh 8.6vw 8.4vh;
+      }
+      .mark {
+        height: 4.8vh;
+        width: auto;
+        display: block;
+      }
+      .copy { max-width: 92%; }
+      .kicker {
+        font-size: 1.55vh;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #5fd5d4;
+      }
+      h1 {
+        margin-top: 1.6vh;
+        font-size: 5.15vh;
+        font-weight: 600;
+        letter-spacing: -0.035em;
+        line-height: 1.08;
+        text-wrap: balance;
+      }
+      .rule {
+        margin: 2.4vh 0 1.8vh;
+        width: 3.2rem;
+        height: 2px;
+        background: #00a8a8;
+      }
+      .place {
+        font-size: 1.55vh;
+        letter-spacing: 0.08em;
+        color: rgb(243 248 248 / 0.62);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <img class="photo" src="./portrait.jpg" alt="" />
+      <div class="veil"></div>
+      <div class="inner">
+        <img class="mark" src="./logo-white.svg" alt="ENDLICH OHNE" />
+        <div class="copy">
+          <p class="kicker">Ärztliche Laser-Tattooentfernung</p>
+          <h1>Tattoo entfernen.<br />Informiert entscheiden.</h1>
+          <div class="rule"></div>
+          <p class="place">Karlsruhe</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+Du übernimmst die bestehende App „ENDLICH OHNE“ (ärztliche Laser-Tattooentfernung, Karlsruhe).
+
+Das Zip enthält den kompletten Quellcode (ohne node_modules). Bitte zuerst CLAUDE.md und package.json lesen, dann `npm install` und die App starten.
+
+Wichtige Regeln:
+- Bestehende Funktionen nicht kaputt machen.
+- Design/Branding behalten (Petrol #008f90, Outfit, Mobile First).
+- Keine Diagnose, kein Heilversprechen, keine Garantie.
+- Einwilligung: ein Button „Ich akzeptiere alles und weiter“, Optionales bleibt aus.
+- Bottom-Navigation nicht zerstören.
+- Galerie „Echte Ergebnisse“ bleibt, Demos sind gekennzeichnet.
+- Rechtstexte sind Entwürfe.
+
+Danach: kurz bestätigen, dass die App läuft, und auf meine nächste Anweisung warten.
