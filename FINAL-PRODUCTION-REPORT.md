@@ -1,113 +1,137 @@
-# ENDLICH OHNE – FINAL PRODUCTION REPORT
+# ENDLICH OHNE – finaler Produktionsstand
 
 Datum: 5. Oktober 2026
-Geprüfter Commit: d513066bc30d817872666bfcfac4fc26f1c9965e
-Keine neue Architektur. Kein Feature. Kein Code-Fix in diesem Lauf.
+Letzter geprüfter Lauf in dieser Umgebung.
 
-Legende: PASS = hier ausgeführt und funktioniert. CODE VERIFIED = im Code und in Unit-Tests nachvollzogen, externe Umgebung nicht erreichbar. NOT VERIFIED = nicht testbar. FAIL = nachweislich falsch.
+Legende: PASS = hier ausgeführt und beobachtet. CODE VERIFIED = der Code setzt die Regel, der externe Dienst lief nicht. NOT VERIFIED = nicht geprüft. FAIL = kaputt.
 
-## AUTH
+## 1. CUSTOMER APP
 
-CODE VERIFIED, mit einer Einschränkung am lokalen Build.
+CODE VERIFIED, Teile PASS.
 
-- Laufende Vorschau: Registrierung und Anmeldung sind sichtbar. Geschützte Seiten `/check`, `/scanner`, `/akte`, `/planer`, `/assistent` und `/koerper` leiten ohne Sitzung auf `/login`. Das wurde in diesem Chat durchgeklickt. Das ist ein Client-Redirect, kein abgeschlossener Konto-Test.
-- Logout: `signOut()` löscht die Better-Auth-Sitzung und den Preview-Bearer. Nicht gegen ein echtes Konto ausgeführt.
-- Session: Better Auth `expiresIn` 365 Tage. `accountStillValid` verlangt nach 365 Tagen eine neue Anmeldung und löscht die alte Session-Zeile. Unit-Test vorhanden. Ein echter Jahreswechsel wurde nicht abgewartet.
-- Server: `requireUserId` nimmt die User-ID nur aus der Session. Ist `VITE_AUTH_ENABLED=false` und `DATABASE_URL` gesetzt, wirft der Server und fällt nicht auf `dev-user` zurück.
-- `.grok/app-env.json` steht auf `VITE_AUTH_ENABLED=false`. Der Template-Test verlangt genau das. In dieser Shell ist die Variable selbst MISSING. Der letzte lokale Production-Bundle enthält `authEnabled: () => false`.
-- Eine veröffentlichte Build ist nur dann mit Anmeldung, wenn die Plattform beim Build `VITE_AUTH_ENABLED=true` setzt. Das ist der vorgesehene Deploy-Weg und hier NOT VERIFIED.
-- Echte Registrierung, Login, Reload-Session und Logout: NOT VERIFIED. Broker-Zugangsdaten fehlen.
+Nach dem 18+-Consent im Browser geöffnet und Text gesehen:
 
-## DATABASE
+- `/check` Check-Start
+- `/scanner` Scanner-Seite mit Foto aufnehmen oder hochladen
+- `/akte` leere Akte, kein erfundener Inhalt
+- `/planer` Planer im Konto
+- `/assistent` Online-KI, Hinweis keine Diagnose
+- `/koerper` 3D-Hinweis, keine Diagnose
+- `/pro` Preise 3,99 € / 22,00 €
+- `/ergebnisse` Galerie-Seite
+- `/zahlung` Anzahlung 25 %, keine Kartendaten in der App
+- `/mehr` Profil und Sprachen
+- `/login` Seite da, Anmeldung in dieser Umgebung aus
 
-NOT VERIFIED.
+Nicht geprüft: echte Registrierung, echtes Foto, Speichern eines Scans, Logout eines echten Kontos.
 
-- `DATABASE_URL`: MISSING.
-- Ohne URL läuft die Vorschau auf eingebettetem PGLite. Ein Prozessneustart löscht diese Daten.
-- Migrationen `0001` bis `0013` plus `migrations/auth/0001_auth.sql` sind im Repository. Gegen Neon wurden sie in diesem Lauf nicht angewendet.
-- Registrierung, Login und Persistenz nach Reload auf einer echten Datenbank: NOT VERIFIED.
-- Öffentliche Standortliste und Demo-Galeriefälle (`is_demo`) sind feste Inhalte, keine Benutzerkonten. Sie ersetzen keine Produktionsdatenbank.
+## 2. AUTH
 
-## PRACTICE
+CODE VERIFIED. Live-Anmeldung NOT VERIFIED.
 
-CODE VERIFIED.
+In dieser Sandbox steht in `.grok/app-env.json` `VITE_AUTH_ENABLED=false`. Die Login-Seite sagt deshalb „Anmeldung ist nicht aktiv“. `BETTER_AUTH_SECRET` ist MISSING. Registrierung, Login, Logout, Reload und die 12-Monats-Frist sind hier nicht mit einem echten Konto gelaufen. Geschützte Seiten führen im Code über `RequireAuth`.
 
-- Rollen `admin`, `doctor`, `staff` kommen aus der Membership, nicht aus dem Request.
-- Standortbindung, deaktivierte Membership, deaktivierte Location, falsche Rolle, falsche `locationId` und Code-Rotation sind in den Unit-Tests DENY bzw. ALLOW und in diesem Lauf erneut mitgelaufen.
-- Praxis-Session: 8 Stunden, `revoked_at` beim Widerruf, Codewechsel und Deaktivierung.
-- Ein echter Praxiscode, ein Arztkonto und ein Widerruf gegen eine laufende Datenbank: NOT VERIFIED.
+Production muss `VITE_AUTH_ENABLED=true` setzen. Das ist hier NOT VERIFIED.
 
-## SCANNER
+## 3. DATABASE
 
-NOT VERIFIED.
+CODE VERIFIED. Live-Datenbank NOT VERIFIED.
 
-- Foto-Eingabe akzeptiert JPEG, PNG und WebP, maximal 12 MB, mit `capture="environment"`. Falsches Format und zu große Datei haben eine Fehlermeldung im Code.
-- Kamera, Upload, Scan, Ergebnis, Akte und Galerie wurden nicht mit einem echten Foto ausgeführt.
-- Geschützte Scanner-Route ohne Anmeldung: Redirect auf `/login` gesehen.
-- iPhone, Android und installierte PWA: NOT VERIFIED.
+`DATABASE_URL` ist MISSING. Der Build überspringt die Neon-Migration und nutzt lokal PGLite. Die Praxis-Migration `0014_practice_desk.sql` ist im Code. Create/Read/Update gegen Neon ist NOT VERIFIED.
 
-## AI
+## 4. SCANNER
 
-CODE VERIFIED für den Prompt. Der Modellaufruf ist NOT VERIFIED.
+Seite PASS. Kamera NOT VERIFIED.
 
-- `XAI_API_KEY`: SET. Der Wert wird nicht ausgegeben. Es wurde kein Bild und keine Frage an das Modell geschickt.
-- Ohne Key antwortet der Scanner mit `unavailable` und speichert den Lauf als fehlgeschlagen.
-- Schlechtes Foto: `photo`. Ohne PRO oder Einzel-Scan: `paywall`.
-- Prompt und Assistent: keine Diagnose, keine Garantie, kein Heilversprechen, keine verbindliche Sitzungszahl. Sprache DE, EN, TR, RU, AR, sonst Deutsch. Kein Italienisch.
-- Eine echte Modellantwort in diesen Sprachen: NOT VERIFIED.
+Die Scanner-Seite lädt und bietet Aufnahme oder Upload. Eine Kamera-Erlaubnis, ein echtes Foto, Upload, Retry und Speichern sind in diesem Lauf nicht ausgeführt.
 
-## STRIPE
+## 5. AI
 
-CODE VERIFIED für den Abbruch ohne Schlüssel. Zahlung selbst NOT VERIFIED.
+CODE VERIFIED. Live-Antwort NOT VERIFIED.
 
-- `STRIPE_SECRET_KEY`: MISSING.
-- `STRIPE_WEBHOOK_SECRET`: MISSING.
-- Checkout ohne Schlüssel liefert `not_configured`. Der Webhook antwortet dann mit Status 503.
-- Anzahlung ist `mode: payment`. PRO Monat und Jahr sind Subscriptions mit `recurring`. Der Webhook prüft Signatur, Betrag, `userId` und Event-Idempotenz.
-- Dieselbe Zahlungsabsicht behält 24 Stunden denselben Idempotency-Key. Das ist ein bestandener Unit-Test, kein Stripe-Lauf.
-- Erfolgreicher Checkout, Abbruch im Stripe-Fenster und Webhook: NOT VERIFIED.
+`XAI_API_KEY` ist SET. Es wurde kein Foto an die KI geschickt. Der Prompt verlangt Deutsch, eine Spanne, keine Diagnose und keine Garantie. Der italienische Ausfalltext ist entfernt. Test `ai-language` ist PASS. Ob das Modell eine konkrete Antwort liefert: NOT VERIFIED.
 
-## PWA
+## 6. PRO / STRIPE
 
-Teilweise PASS, Installation NOT VERIFIED.
+CODE VERIFIED. Zahlung NOT VERIFIED.
 
-- `GET /__grok/manifest.webmanifest`: 200, `display: standalone`, `start_url: /`.
-- Icon `/__grok/icon-180.png`: 200. In dieser Vorschau heißt die App im Manifest „Grok App“, weil kein veröffentlichter Hostname gesetzt ist.
-- Ein Service Worker ist nicht registriert. `/sw.js` antwortet 404.
-- Ob sich die App auf einem Telefon installieren lässt: NOT VERIFIED.
+`STRIPE_SECRET_KEY` MISSING. `STRIPE_WEBHOOK_SECRET` MISSING. Ein Beleg mit Status paid wird serverseitig nur akzeptiert, wenn Stripe die Session als paid meldet, die User-ID passt und der Betrag stimmt. Checkout, Abbruch, Webhook und doppelte Anfrage sind NOT VERIFIED. Kein Stripe-Secret im Frontend ausgegeben.
 
-## PRODUCTION ENV
+## 7. PRACTICE
 
-Nur Namen. Keine Werte.
+CODE VERIFIED. Voller Praxis-Durchklick NOT VERIFIED.
 
-| Variable | Status |
+`/praxis` zeigt ohne Mitgliedschaft den Code-Zugang, keine Beispielkunden. Dashboard, Kalender, Termin, Akte, Zahlung und Admin-Seiten sind im Code. Die Statusmaschine und die Rollengrenzen sind als Unit-Tests PASS. Ein eingeloggter Doctor mit echten Terminen ist hier nicht durchgeklickt.
+
+## 8. ADMIN
+
+CODE VERIFIED. Live NOT VERIFIED.
+
+Verwaltung, Rollen, Standorte, Sitzungen und Audit hängen an der Admin-Rolle. Der letzte aktive Admin bleibt im bestehenden SQL geschützt. Keine Admin-Sitzung in diesem Browser.
+
+## 9. DOCTOR
+
+CODE VERIFIED. Live NOT VERIFIED.
+
+Doctor darf Behandlung starten, dokumentieren und abschließen. Doctor darf keine Admin-Aktion. Fremder Standort wird von der Boundary abgelehnt. Nicht mit einem Doctor-Konto geprüft.
+
+## 10. STAFF
+
+CODE VERIFIED. Live NOT VERIFIED.
+
+Staff darf Kalender, Check-in, Bestätigen und eine hinterlegte Zahlung erfassen. Staff darf keine Behandlung starten und keine Rolle ändern. Nicht mit einem Staff-Konto geprüft.
+
+## 11. PWA
+
+PASS für Manifest. Offline NOT VERIFIED.
+
+`/__grok/manifest.webmanifest` antwortet 200. Name und Kurzname sind `ENDLICH OHNE`, Start-URL `/`, Display standalone, Icon vorhanden. Ein eigener Service Worker der App ist nicht vorhanden. Offline-Verhalten ist NOT VERIFIED. iPhone und Android sind NOT VERIFIED.
+
+## 12. SECURITY
+
+Unit-Tests PASS. Direkte Live-Requests NOT VERIFIED.
+
+Geprüft im Testlauf, nicht gegen einen laufenden Login:
+
+- Kunde ohne Praxis-Session darf den Bereich nicht öffnen
+- Doctor nicht am fremden Standort
+- Staff nicht als Admin
+- deaktivierte Mitgliedschaft und abgelaufene Session ungültig
+- Status nicht überspringbar
+- Client-Status `PAID` setzt keine Zahlung
+- Kunde A liest nicht Termin von Kunde B über eine behauptete Rolle
+
+Ein echter HTTP-Angriff mit zwei Konten ist NOT VERIFIED.
+
+## 13. TESTS
+
+PASS
+
+AUTOMATED TESTS: 196/196 und 80/80
+
+## 14. BUILD
+
+TYPECHECK: PASS
+LINT: PASS mit 18 Warnings, 0 Errors
+BUILD: PASS
+
+## 15. ENVIRONMENT
+
+| Variable | Stand |
 |---|---|
-| VITE_AUTH_ENABLED | MISSING in dieser Shell. Datei `.grok/app-env.json` enthält `false`. |
+| VITE_AUTH_ENABLED | in der Sandbox false, Production NOT VERIFIED |
 | DATABASE_URL | MISSING |
 | BETTER_AUTH_SECRET | MISSING |
-| BETTER_AUTH_URL | MISSING |
-| GROK_AUTH_CLIENT_ID | MISSING |
-| GROK_AUTH_CLIENT_SECRET | MISSING |
-| GROK_AUTH_ISSUER | MISSING |
-| GROK_PROJECT_ID | MISSING |
 | STRIPE_SECRET_KEY | MISSING |
 | STRIPE_WEBHOOK_SECRET | MISSING |
-| XAI_API_KEY | SET |
+| XAI_API_KEY | SET, Wert nicht ausgegeben |
 
-Für eine echte Veröffentlichung werden mindestens gebraucht: `VITE_AUTH_ENABLED=true`, `DATABASE_URL`, Better-Auth- und Grok-Auth-Zugangsdaten, `BETTER_AUTH_URL`. Stripe nur für Zahlungen. `XAI_API_KEY` nur für die Online-KI.
+## 16. DEPLOYMENT
 
-## DEPLOYMENT
+NOT VERIFIED. Es wurde kein Production-Deploy und kein echter Stripe-Webhook geprüft.
 
-NOT VERIFIED.
-
-Der vorgesehene Weg setzt die Variablen beim Deploy und baut neu. Ob die nächste Veröffentlichung das tut, ist von hier nicht sichtbar. Der vorhandene lokale Bundle hat die Anmeldung ausgeschaltet. Mit gesetzter `DATABASE_URL` und weiterhin `VITE_AUTH_ENABLED=false` würde der Server Anfragen ablehnen, nicht still einen gemeinsamen Dev-Benutzer benutzen.
-
-## TESTS
-
-266/266. In diesem Lauf ausgeführt: 195 Template-Tests und 71 Projekt-Tests, 0 Fehler.
-
-Typecheck, Lint und Build wurden in diesem Lauf nicht erneut gestartet. Ihr letzter Stand am selben Tag war PASS, Lint mit 17 Warnings und 0 Errors.
-
-## PRODUCTION STATUS
+## PRODUCTION
 
 NOT READY
+
+Grund: Datenbank, Auth-Secret und Stripe fehlen in dieser Umgebung. Anmeldung ist hier aus. Kamera, KI-Antwort, Zahlung und ein echter Praxis-Durchklick sind nicht gelaufen.

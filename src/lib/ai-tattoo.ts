@@ -84,7 +84,7 @@ async function grokChat(
 ): Promise<{ ok: true; text: string } | { ok: false; error: string; code?: string }> {
   const apiKey = process.env.XAI_API_KEY;
   if (!apiKey) {
-    return { ok: false, error: "IA online non disponibile in questo ambiente.", code: "unavailable" };
+    return { ok: false, error: "Online-KI ist in dieser Umgebung nicht verfügbar.", code: "unavailable" };
   }
   if (quotaBlocked()) {
     return { ok: false, error: "Online-KI-Kontingent gerade erschöpft.", code: "quota" };

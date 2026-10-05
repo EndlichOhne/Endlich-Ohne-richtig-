@@ -1223,10 +1223,12 @@ export const getPracticeDesk = createServerFn({ method: "GET" })
       completed: number;
       open_count: number;
       payments_open: number;
+      running: number;
     }>`
       select
         count(*)::int as appointments,
         count(*) filter (where status = 'completed')::int as completed,
+        count(*) filter (where status = 'in_progress')::int as running,
         count(*) filter (where status not in ('completed', 'cancelled', 'no_show'))::int as open_count,
         count(*) filter (
           where payment_status in ('OPEN', 'PARTIAL') and (deposit_cents + rest_cents) > 0
@@ -1269,6 +1271,7 @@ export const getPracticeDesk = createServerFn({ method: "GET" })
       day,
       appointments: Number(row?.appointments ?? 0),
       completed: Number(row?.completed ?? 0),
+      running: Number(row?.running ?? 0),
       open: Number(row?.open_count ?? 0),
       paymentsOpen: Number(row?.payments_open ?? 0),
       revenueCents: Number(money[0]?.n ?? 0) > 0 ? Number(money[0]?.cents ?? 0) : null,

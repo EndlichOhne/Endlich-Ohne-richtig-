@@ -42,6 +42,7 @@ function DeskPage() {
           <div className="grid grid-cols-2 gap-3">
             <Card title="Termine heute" value={String(desk.appointments)} />
             <Card title="Abgeschlossen" value={String(desk.completed)} />
+            <Card title="Behandlung läuft" value={String(desk.running)} />
             <Card title="Offen" value={String(desk.open)} />
             <Card title="Zahlung offen" value={String(desk.paymentsOpen)} />
             <Card title="Kunden" value={String(desk.customers)} />
