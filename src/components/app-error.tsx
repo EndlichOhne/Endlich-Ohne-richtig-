@@ -1,12 +1,8 @@
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
-export function AppError({
-  error,
-  reset,
-}: {
-  error: Error;
-  reset: () => void;
-}) {
+export function AppError({ error, reset }: ErrorComponentProps) {
+  const message = error instanceof Error ? error.message : "Unbekannter Fehler";
   return (
     <div className="mx-auto flex min-h-[60dvh] max-w-lg flex-col justify-center gap-4 px-5 py-16">
       <p className="kicker text-primary">Störung</p>
@@ -15,7 +11,7 @@ export function AppError({
         Die Ansicht hat nicht geladen. Deine Daten auf dem Gerät bleiben erhalten.
         Bitte erneut versuchen.
       </p>
-      <p className="truncate text-xs text-muted-foreground">{error.message}</p>
+      <p className="truncate text-xs text-muted-foreground">{message}</p>
       <Button className="min-h-12 rounded-xl" onClick={reset}>
         Erneut versuchen
       </Button>
