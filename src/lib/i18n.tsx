@@ -40,7 +40,7 @@ const DE: Record<string, string> = {
   "consent.notes": "Hinweise",
   "consent.imprint": "Impressum",
   "consent.foot":
-    "Standort und Erinnerungen bleiben aus. Widerruf unter Profil. Texte sind Entwürfe.",
+    "Standort und Erinnerungen bleiben aus. Die Altersangabe ist eine Bestätigung, kein Altersnachweis. Widerruf unter Profil. Texte sind Entwürfe.",
 
   "disclaimer.full":
     "Diese App dient ausschließlich der allgemeinen Information und Orientierung. Sie ersetzt keine ärztliche Untersuchung, professionelle Beratung oder individuelle Behandlungsempfehlung. Angaben zu Kosten, Sitzungsanzahl und Behandlungserfolg sind unverbindliche Richtwerte und können individuell erheblich abweichen. Vorher-/Nachher-Bilder sind keine typischen Ergebnisse und keine Garantie.",

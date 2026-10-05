@@ -9,6 +9,7 @@ import {
   skuLabel,
   type BillingSku,
 } from "@/lib/pro";
+import { depositIdempotencyKey, proIdempotencyKey } from "@/lib/checkout-key";
 
 const METHODS: PayMethod[] = ["card", "wallet", "paypal", "sepa", "klarna"];
 
@@ -168,10 +169,7 @@ export const createCheckout = createServerFn({ method: "POST" })
       },
     };
 
-    const idemp =
-      data.idempotencyKey.length > 8
-        ? data.idempotencyKey
-        : `eo-${band.id}-${Date.now()}`;
+    const idemp = depositIdempotencyKey(context.userId, data);
 
     const create = (
       types: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] | undefined,
@@ -408,7 +406,7 @@ export const createProCheckout = createServerFn({ method: "POST" })
     }
     if (data.email) params.customer_email = data.email;
     const session = await stripe.checkout.sessions.create(params, {
-      idempotencyKey: `eo-${data.sku}-${context.userId}-${Date.now()}`,
+      idempotencyKey: proIdempotencyKey(context.userId, data.sku),
     });
     if (!session.url) return { ok: false as const, code: "no_url" as const };
     return { ok: true as const, url: session.url, mode };

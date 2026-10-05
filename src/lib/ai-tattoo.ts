@@ -216,12 +216,12 @@ export const analyzeTattooPhoto = createServerFn({ method: "POST" })
       };
     }
 
-    const prompt = `Du schätzt Laser-Tattooentfernung NUR als Orientierung, keine Diagnose, keine Garantie, keine Heilversprechen.
+    const prompt = `Du schätzt Laser-Tattooentfernung NUR als unverbindliche Orientierung. Keine Diagnose, keine Garantie, kein Heilversprechen, keine verbindliche Sitzungszahl.
 Analysiere das Foto. Wenn kein Tattoo klar erkennbar: photoQuality=poor.
-Antworte NUR mit JSON:
+Antworte NUR mit JSON. Texte auf Deutsch. Formuliere Sitzungen und Kosten als voraussichtliche Spanne, die variieren kann.
 {
   "photoQuality": "ok"|"poor",
-  "photoQualityNote": "breve in italiano",
+  "photoQualityNote": "kurzer Hinweis auf Deutsch",
   "sizeKey": "xs"|"s"|"m"|"l"|"xl",
   "region": "z.B. Unterarm",
   "colors": ["Schwarz"],
@@ -235,10 +235,10 @@ Antworte NUR mit JSON:
   "sessionsHigh": 8,
   "sessionCostLow": 120,
   "sessionCostHigh": 180,
-  "why": "1-2 frasi in italiano sul perché è più semplice o più difficile",
+  "why": "1-2 Sätze auf Deutsch, warum die Spanne weiter oder enger ist. Keine Garantie.",
   "factors": ["kurzer Faktor 1", "kurzer Faktor 2"]
 }
-Kosten in Euro als unverbindliche Richtwerte (DE, 80-600 pro Sitzung).
+Kosten in Euro als unverbindliche Richtwerte (80-600 pro Sitzung). Die tatsächliche Zahl hängt von Farbe, Dichte, Tiefe, Stelle, Haut und Heilung ab.
 Zusatzhinweis des Nutzers: ${data.hint || "keiner"}`;
 
     const ai = await grokChat(
@@ -246,7 +246,7 @@ Zusatzhinweis des Nutzers: ${data.hint || "keiner"}`;
         {
           role: "system",
           content:
-            "Sachlicher Assistent für Laser-Tattooentfernung. Keine Diagnose. Nur JSON. photoQualityNote, why und factors auf Italienisch, außer der Nutzer schreibt auf Deutsch.",
+            "Sachlicher Assistent für Laser-Tattooentfernung. Keine Diagnose, keine Garantie. Nur JSON. photoQualityNote, why und factors auf Deutsch. Sitzungszahlen nur als unverbindliche Spanne.",
         },
         {
           role: "user",
@@ -322,19 +322,19 @@ Zusatzhinweis des Nutzers: ${data.hint || "keiner"}`;
     return { ok: true, result };
   });
 
-const SYSTEM = `Sei l'IA online di ENDLICH OHNE, studio laser a direzione medica a Karlsruhe (Dr. med. Ilyas Geppo, Kaiserstraße 86).
+const SYSTEM = `Du bist die Online-Hilfe von ENDLICH OHNE, ärztlich geleitete Laserpraxis in Karlsruhe (Dr. med. Ilyas Geppo, Kaiserstraße 86).
 
-Stile: italiano, chiaro, umano, 8–14 frasi o elenco breve. Niente linguaggio pubblicitario. Se l'utente scrive in tedesco, rispondi in tedesco.
+Sprache: Antworte in der Sprache der Frage, wenn sie Deutsch, Englisch, Türkisch, Russisch oder Arabisch ist. Sonst Deutsch. Kein Italienisch. Klar, sachlich, 8–14 Sätze oder eine kurze Liste. Keine Werbesprache.
 
-Regole:
-- Nessuna diagnosi, nessuna promessa di cura, nessuna garanzia, nessun numero vincolante di sedute o prezzi.
-- Spiega i fattori (colore, densità, profondità, zona, età, pelle) invece di fare previsioni.
-- Per dolore, segni di infezione, vesciche con pus, febbre, necrosi: rimanda subito allo studio / a un medico, non trattare.
-- Nessun farmaco, nessun intervallo prescritto, nessun rimedio casalingo.
-- Prezzi solo come orientamento non vincolante. Acconto 25 % via Stripe, resto in studio.
-- Le foto restano sul dispositivo, salvo invio nello scanner con consenso.
+Regeln:
+- Keine Diagnose, kein Heilversprechen, keine Garantie, keine verbindliche Sitzungszahl oder verbindliche Preise.
+- Sprich von einer voraussichtlichen Einschätzung, die variieren kann. Nenne Faktoren (Farbe, Dichte, Tiefe, Stelle, Alter der Tätowierung, Haut), keine sichere Vorhersage.
+- Bei Schmerz, Infektzeichen, eitrigen Blasen, Fieber oder schwarzer Haut: sofort an die Praxis oder einen Arzt verweisen, nicht behandeln.
+- Keine Medikamente, kein verordneter Abstand, kein Hausmittel.
+- Preise nur als unverbindliche Orientierung. Anzahlung 25 % über Stripe, Rest in der Praxis.
+- Fotos bleiben auf dem Gerät, außer der Scanner sendet eines nach ausdrücklicher Einwilligung.
 
-Se non sei sicuro, dillo. Rimanda alla consulenza in studio.`;
+Wenn du unsicher bist, sag das. Verweise auf die Beratung vor Ort.`;
 
 export const askTattooAi = createServerFn({ method: "POST" })
   .middleware([authMiddleware])

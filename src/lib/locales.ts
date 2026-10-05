@@ -25,7 +25,7 @@ export const EN: Record<string, string> = {
   "consent.notes": "Notes",
   "consent.imprint": "Imprint",
   "consent.foot":
-    "Location and reminders stay off. Withdraw in Profile. Texts are drafts.",
+    "Location and reminders stay off. The age box is a confirmation, not proof of age. Withdraw in Profile. Texts are drafts.",
   "disclaimer.full":
     "This app is general information only. It does not replace a medical exam, professional advice or a treatment plan. Costs, sessions and results are non-binding estimates and can vary a lot. Before/after images are not typical results and not a guarantee.",
   "legal.draft":
@@ -240,7 +240,7 @@ export const TR: Record<string, string> = {
   "consent.notes": "Notlar",
   "consent.imprint": "Künye",
   "consent.foot":
-    "Konum ve hatırlatmalar kapalı kalır. Geri çekme profilde. Metinler taslaktır.",
+    "Konum ve hatırlatmalar kapalı kalır. Yaş kutusu bir onaydır, yaş kanıtı değildir. Geri çekme profilde. Metinler taslaktır.",
   "disclaimer.full":
     "Bu uygulama yalnızca genel bilgidir. Tıbbi muayene, danışmanlık veya tedavi planının yerine geçmez. Maliyet, seans ve sonuç bağlayıcı değildir ve çok değişebilir. Önce/sonra görselleri tipik sonuç değildir ve garanti değildir.",
   "legal.draft": "Taslak – hukuki tavsiye değildir. Yayından önce uzman incelemesi gerekir.",
@@ -329,7 +329,7 @@ export const RU: Record<string, string> = {
   "consent.notes": "Заметки",
   "consent.imprint": "Выходные данные",
   "consent.foot":
-    "Геолокация и напоминания выключены. Отзыв в профиле. Тексты — черновики.",
+    "Геолокация и напоминания выключены. Отметка о возрасте — подтверждение, не доказательство возраста. Отзыв в профиле. Тексты — черновики.",
   "disclaimer.full":
     "Приложение только для общей информации. Оно не заменяет осмотр, консультацию или план лечения. Стоимость, сеансы и результат — ориентиры и могут сильно отличаться. Фото «до/после» не являются типичным результатом и не гарантируют исход.",
   "legal.draft": "Черновик — не юридическая консультация. Перед публикацией нужна проверка.",
@@ -418,7 +418,7 @@ export const AR: Record<string, string> = {
   "consent.notes": "تنبيهات",
   "consent.imprint": "بيانات الناشر",
   "consent.foot":
-    "الموقع والتذكيرات تبقى مغلقة. السحب من الملف الشخصي. النصوص مسودات.",
+    "الموقع والتذكيرات تبقى مغلقة. خانة العمر تأكيد وليست إثباتًا للعمر. السحب من الملف الشخصي. النصوص مسودات.",
   "disclaimer.full":
     "هذا التطبيق معلومات عامة فقط. لا يغني عن فحص طبي أو استشارة أو خطة علاج. التكاليف والجلسات والنتيجة تقديرات غير ملزمة وقد تختلف كثيرًا. صور قبل/بعد ليست نتائج نموذجية وليست ضمانًا.",
   "legal.draft": "مسودة – ليست استشارة قانونية. يلزم مراجعة مختصة قبل الإطلاق.",
