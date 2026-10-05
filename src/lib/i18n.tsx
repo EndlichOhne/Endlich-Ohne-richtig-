@@ -28,8 +28,13 @@ const DE: Record<string, string> = {
   "consent.welcome": "Willkommen",
   "splash.loading": "App wird geladen",
   "consent.body":
-    "Ein Tipp, dann geht’s in die App. AGB und Datenschutz gelten. Keine Diagnose, keine Garantie. Ab 16 Jahren.",
-  "consent.accept": "Ich akzeptiere alles und weiter",
+    "Jede Zustimmung muss einzeln bestätigt werden. Ohne ausdrückliche 18+-Bestätigung bleibt die App geschlossen. Keine Diagnose, keine Garantie.",
+  "consent.accept": "App betreten",
+  "consent.agbCheck": "Ich akzeptiere die AGB.",
+  "consent.privacyCheck": "Ich akzeptiere die Datenschutzerklärung.",
+  "consent.medicalCheck":
+    "Ich habe den medizinischen Hinweis gelesen: keine Diagnose, kein Heilversprechen, keine Garantie.",
+  "consent.age18": "Ich bestätige, dass ich mindestens 18 Jahre alt bin.",
   "consent.agb": "AGB",
   "consent.privacy": "Datenschutz",
   "consent.notes": "Hinweise",

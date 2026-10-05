@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   EMPTY_CONSENT,
+  acceptRequiredRecord,
   clearLocalAppData,
   loadConsent,
   requiredOk,
@@ -48,17 +49,7 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
       ready,
       accepted: requiredOk(consent),
       setPartial: (patch) => persist({ ...consent, ...patch }),
-      acceptRequired: (extras) =>
-        persist({
-          ...consent,
-          ...extras,
-          agb: true,
-          privacy: true,
-          medical: true,
-          age18: true,
-          onboardingDone: true,
-          acceptedAt: new Date().toISOString(),
-        }),
+      acceptRequired: (extras) => persist(acceptRequiredRecord(consent, extras)),
       withdraw: () => {
         clearLocalAppData();
         persist(EMPTY_CONSENT);

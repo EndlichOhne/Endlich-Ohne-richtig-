@@ -28,7 +28,68 @@ export const EMPTY_CONSENT: ConsentRecord = {
 };
 
 export function requiredOk(c: ConsentRecord): boolean {
-  return c.agb && c.privacy && c.medical && c.age18 && c.version === CONSENT_VERSION;
+  return c.agb === true && c.privacy === true && c.medical === true && c.age18 === true && c.version === CONSENT_VERSION;
+}
+
+/** All four boxes must be explicitly true. A plain click is not enough. */
+export function explicitConsentReady(flags: {
+  agb: boolean;
+  privacy: boolean;
+  medical: boolean;
+  age18: boolean;
+}): boolean {
+  return flags.agb === true && flags.privacy === true && flags.medical === true && flags.age18 === true;
+}
+
+/**
+ * Merge a consent attempt. Does not invent age18, AGB, privacy, or the medical notice.
+ * Entry is stored only when each of those four was already true or passed as true.
+ */
+export function acceptRequiredRecord(
+  current: ConsentRecord,
+  extras?: Partial<ConsentRecord>,
+  now = new Date().toISOString(),
+): ConsentRecord {
+  const next: ConsentRecord = {
+    ...current,
+    ...extras,
+    version: CONSENT_VERSION,
+  };
+  if (!explicitConsentReady(next)) {
+    return {
+      ...next,
+      acceptedAt: null,
+    };
+  }
+  return {
+    ...next,
+    agb: true,
+    privacy: true,
+    medical: true,
+    age18: true,
+    onboardingDone: true,
+    acceptedAt: now,
+  };
+}
+
+export function normalizeConsent(parsed: unknown): ConsentRecord {
+  if (!parsed || typeof parsed !== "object") return { ...EMPTY_CONSENT };
+  const record = parsed as Partial<ConsentRecord>;
+  if (record.version !== CONSENT_VERSION) return { ...EMPTY_CONSENT };
+  return {
+    ...EMPTY_CONSENT,
+    ...record,
+    version: CONSENT_VERSION,
+    agb: record.agb === true,
+    privacy: record.privacy === true,
+    medical: record.medical === true,
+    age18: record.age18 === true,
+    location: record.location === true,
+    notifications: record.notifications === true,
+    personalized: record.personalized === true,
+    onboardingDone: record.onboardingDone === true,
+    acceptedAt: typeof record.acceptedAt === "string" ? record.acceptedAt : null,
+  };
 }
 
 export function loadConsent(): ConsentRecord {
@@ -36,9 +97,8 @@ export function loadConsent(): ConsentRecord {
   try {
     const raw = localStorage.getItem(CONSENT_KEY);
     if (!raw) return EMPTY_CONSENT;
-    const parsed = JSON.parse(raw) as ConsentRecord;
-    if (parsed.version !== CONSENT_VERSION) return { ...EMPTY_CONSENT };
-    return { ...EMPTY_CONSENT, ...parsed };
+    const parsed = JSON.parse(raw) as unknown;
+    return normalizeConsent(parsed);
   } catch {
     return EMPTY_CONSENT;
   }

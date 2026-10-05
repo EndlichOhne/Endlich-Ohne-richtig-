@@ -13,8 +13,13 @@ export const EN: Record<string, string> = {
   "consent.welcome": "Welcome",
   "splash.loading": "Loading the app",
   "consent.body":
-    "One tap to enter. Terms and privacy apply. No diagnosis, no guarantee. Age 16+.",
-  "consent.accept": "I accept everything and continue",
+    "Each consent must be confirmed separately. Without an explicit 18+ confirmation the app stays closed. No diagnosis, no guarantee.",
+  "consent.accept": "Enter the app",
+  "consent.agbCheck": "I accept the terms.",
+  "consent.privacyCheck": "I accept the privacy notice.",
+  "consent.medicalCheck":
+    "I have read the medical notice: no diagnosis, no promise of a cure, no guarantee.",
+  "consent.age18": "I confirm that I am at least 18 years old.",
   "consent.agb": "Terms",
   "consent.privacy": "Privacy",
   "consent.notes": "Notes",
@@ -221,8 +226,13 @@ export const TR: Record<string, string> = {
   "consent.welcome": "Hoş geldiniz",
   "splash.loading": "Uygulama yükleniyor",
   "consent.body":
-    "Bir dokunuşla uygulamaya girin. Şartlar ve gizlilik geçerlidir. Teşhis yok, garanti yok. 16 yaşından itibaren.",
-  "consent.accept": "Hepsini kabul et ve devam et",
+    "Her onay ayrı verilmelidir. Açık 18+ onayı olmadan uygulama kapalı kalır. Teşhis yok, garanti yok.",
+  "consent.accept": "Uygulamaya gir",
+  "consent.agbCheck": "Şartları kabul ediyorum.",
+  "consent.privacyCheck": "Gizlilik bildirimini kabul ediyorum.",
+  "consent.medicalCheck":
+    "Tıbbi uyarıyı okudum: teşhis yok, iyileşme sözü yok, garanti yok.",
+  "consent.age18": "En az 18 yaşında olduğumu onaylıyorum.",
   "consent.agb": "Şartlar",
   "consent.privacy": "Gizlilik",
   "consent.notes": "Notlar",
@@ -304,8 +314,13 @@ export const RU: Record<string, string> = {
   "consent.welcome": "Добро пожаловать",
   "splash.loading": "Приложение загружается",
   "consent.body":
-    "Одно касание — и вы в приложении. Действуют условия и политика. Без диагноза, без гарантии. С 16 лет.",
-  "consent.accept": "Принимаю всё и продолжаю",
+    "Каждое согласие нужно подтвердить отдельно. Без явного подтверждения 18+ приложение закрыто. Без диагноза, без гарантии.",
+  "consent.accept": "Войти в приложение",
+  "consent.agbCheck": "Я принимаю условия.",
+  "consent.privacyCheck": "Я принимаю политику конфиденциальности.",
+  "consent.medicalCheck":
+    "Я прочитал медицинское уведомление: без диагноза, без обещания излечения, без гарантии.",
+  "consent.age18": "Я подтверждаю, что мне не меньше 18 лет.",
   "consent.agb": "Условия",
   "consent.privacy": "Конфиденциальность",
   "consent.notes": "Заметки",
@@ -387,8 +402,13 @@ export const AR: Record<string, string> = {
   "consent.welcome": "مرحبًا",
   "splash.loading": "جاري تحميل التطبيق",
   "consent.body":
-    "لمسة واحدة للدخول. تسري الشروط والخصوصية. لا تشخيص ولا ضمان. من سن 16.",
-  "consent.accept": "أوافق على الكل وأتابع",
+    "يجب تأكيد كل موافقة على حدة. بدون تأكيد صريح 18+ يبقى التطبيق مغلقًا. لا تشخيص ولا ضمان.",
+  "consent.accept": "دخول التطبيق",
+  "consent.agbCheck": "أوافق على الشروط.",
+  "consent.privacyCheck": "أوافق على بيان الخصوصية.",
+  "consent.medicalCheck":
+    "قرأت التنبيه الطبي: لا تشخيص، ولا وعد بالشفاء، ولا ضمان.",
+  "consent.age18": "أؤكد أن عمري 18 عامًا على الأقل.",
   "consent.agb": "الشروط",
   "consent.privacy": "الخصوصية",
   "consent.notes": "تنبيهات",
