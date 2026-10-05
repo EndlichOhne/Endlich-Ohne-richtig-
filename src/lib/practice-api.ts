@@ -3,7 +3,16 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { BRAND } from "@/lib/brand";
 import { PRACTICE_SESSION_MS } from "@/lib/reauth";
-import { appointmentVisible, sessionActor } from "@/lib/server-boundary";
+import {
+  decideAppointmentRead,
+  decideAppointmentWrite,
+  membershipCoversLocation,
+  practiceAccessAllows,
+  sessionActor,
+  verifiedAccessUsable,
+  type BoundaryRole,
+  type VerifiedPracticeAccess,
+} from "@/lib/server-boundary";
 
 const CLINIC_EMAILS = [BRAND.email, "kontakt@endlich-ohne.de"].map((e) => e.toLowerCase());
 
@@ -106,6 +115,7 @@ type LiveSession = {
   mustRotate: boolean;
   locationName: string;
   locationCity: string;
+  verified: VerifiedPracticeAccess;
 };
 
 async function loadCookieSession(userId: string): Promise<LiveSession | null> {
@@ -147,24 +157,30 @@ async function loadCookieSession(userId: string): Promise<LiveSession | null> {
   `;
   const row = rows[0];
   if (!row || row.user_id !== userId || !g.isPracticeRole(row.role)) return null;
-  const usable = g.sessionUsable({
-    revoked: Boolean(row.revoked_at),
-    expired: new Date(row.expires_at).getTime() <= Date.now(),
-    membershipActive: row.member_active,
-    locationActive: row.location_active,
-    sessionCodeVersion: Number(row.code_version),
-    membershipCodeVersion: Number(row.member_version),
-  });
-  if (!usable) return null;
-  return {
-    id: row.id,
+  const verified: VerifiedPracticeAccess = {
     userId: row.user_id,
     membershipId: row.membership_id,
     locationId: row.location_id,
     role: row.role,
+    membershipActive: row.member_active,
+    locationActive: row.location_active,
+    mustRotate: row.must_rotate,
+    revoked: Boolean(row.revoked_at),
+    expired: new Date(row.expires_at).getTime() <= Date.now(),
+    sessionCodeVersion: Number(row.code_version),
+    membershipCodeVersion: Number(row.member_version),
+  };
+  if (!verifiedAccessUsable(verified)) return null;
+  return {
+    id: row.id,
+    userId: verified.userId,
+    membershipId: verified.membershipId,
+    locationId: verified.locationId,
+    role: verified.role,
     mustRotate: false,
     locationName: row.location_name,
     locationCity: row.location_city,
+    verified,
   };
 }
 
@@ -231,13 +247,16 @@ async function openSession(userId: string, membershipId: string) {
   await writeSessionCookie(id, Math.floor(PRACTICE_SESSION_MS / 1000));
 }
 
-async function requireAdmin(userId: string) {
+async function requirePracticeAccess(userId: string, allowedRoles: BoundaryRole[]) {
   const session = await loadSession(userId);
-  const g = await guard();
-  if (!session || !g.canCallAdmin(g.effectiveRole(session.role))) {
-    throw new Error("Nicht erlaubt.");
+  if (!session || !practiceAccessAllows(session.verified, allowedRoles)) {
+    throw new Error("Nicht gefunden.");
   }
   return session;
+}
+
+async function requireAdmin(userId: string) {
+  return requirePracticeAccess(userId, ["admin"]);
 }
 
 export const getPracticeHome = createServerFn({ method: "GET" })
@@ -274,7 +293,7 @@ export const getPracticeHome = createServerFn({ method: "GET" })
       emailMasked: string;
     }[] = [];
     let members: { id: string; role: string; active: boolean; emailMasked: string }[] = [];
-    if (session && !session.mustRotate) {
+    if (session && practiceAccessAllows(session.verified, ["admin", "doctor", "staff"])) {
       const arows = await sql<{
         id: string;
         starts_at: string;
@@ -812,15 +831,39 @@ export const setLocationActive = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await requireAdmin(context.userId);
     const sql = await sqlClient();
-    const mine = await sql<{ id: string }>`
-      select id from practice_memberships
-      where user_id = ${context.userId}
-        and location_id = ${data.locationId}
-        and role = 'admin'
-        and active = true
+    const mine = await sql<{
+      id: string;
+      user_id: string;
+      location_id: string;
+      role: string;
+      active: boolean;
+      location_active: boolean;
+    }>`
+      select m.id, m.user_id, m.location_id, m.role, m.active, l.active as location_active
+      from practice_memberships m
+      join practice_locations l on l.id = m.location_id
+      where m.user_id = ${context.userId}
+        and m.location_id = ${data.locationId}
       limit 1
     `;
-    if (!mine[0]) throw new Error("Nicht gefunden.");
+    const g = await guard();
+    const member = mine[0];
+    if (
+      !member ||
+      !g.isPracticeRole(member.role) ||
+      !membershipCoversLocation({
+        membershipUserId: member.user_id,
+        actorUserId: context.userId,
+        membershipLocationId: member.location_id,
+        requestedLocationId: data.locationId,
+        membershipActive: member.active,
+        locationActive: member.location_active,
+        membershipRole: member.role,
+        allowedRoles: ["admin"],
+      })
+    ) {
+      throw new Error("Nicht gefunden.");
+    }
     const loc = await sql<{ active: boolean }>`
       select active from practice_locations where id = ${data.locationId} limit 1
     `;
@@ -872,17 +915,40 @@ export const switchPracticeLocation = createServerFn({ method: "POST" })
   })
   .handler(async ({ context, data }) => {
     const sql = await sqlClient();
-    const rows = await sql<{ id: string }>`
-      select m.id from practice_memberships m
+    const rows = await sql<{
+      id: string;
+      user_id: string;
+      location_id: string;
+      role: string;
+      active: boolean;
+      location_active: boolean;
+    }>`
+      select m.id, m.user_id, m.location_id, m.role, m.active, l.active as location_active
+      from practice_memberships m
       join practice_locations l on l.id = m.location_id
       where m.user_id = ${context.userId}
         and m.location_id = ${data.locationId}
-        and m.active = true
         and m.must_rotate = false
-        and l.active = true
       limit 1
     `;
-    if (!rows[0]) throw new Error("Nicht gefunden.");
+    const g = await guard();
+    const member = rows[0];
+    if (
+      !member ||
+      !g.isPracticeRole(member.role) ||
+      !membershipCoversLocation({
+        membershipUserId: member.user_id,
+        actorUserId: context.userId,
+        membershipLocationId: member.location_id,
+        requestedLocationId: data.locationId,
+        membershipActive: member.active,
+        locationActive: member.location_active,
+        membershipRole: member.role,
+        allowedRoles: ["admin", "doctor", "staff"],
+      })
+    ) {
+      throw new Error("Nicht gefunden.");
+    }
     const current = await loadSession(context.userId);
     if (current) {
       await sql`
@@ -892,9 +958,9 @@ export const switchPracticeLocation = createServerFn({ method: "POST" })
     }
     await sql`
       update practice_memberships set last_used_at = now()
-      where id = ${rows[0].id} and user_id = ${context.userId}
+      where id = ${member.id} and user_id = ${context.userId}
     `;
-    await openSession(context.userId, rows[0].id);
+    await openSession(context.userId, member.id);
     return { ok: true as const };
   });
 
@@ -911,14 +977,12 @@ export const savePracticeAppointment = createServerFn({ method: "POST" })
     return { email, startsAt, note };
   })
   .handler(async ({ context, data }) => {
-    const session = await loadSession(context.userId);
-    const g = await guard();
-    if (!session || session.mustRotate) throw new Error("Nicht gefunden.");
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor", "staff"]);
     if (
-      !g.canMutateAppointment({
-        actorRole: g.effectiveRole(session.role),
-        actorLocationId: session.locationId,
-        locationId: session.locationId,
+      !decideAppointmentWrite({
+        verified: session.verified,
+        appointmentLocationId: session.verified.locationId,
+        request: data,
       })
     ) {
       throw new Error("Nicht gefunden.");
@@ -951,26 +1015,24 @@ export const setPracticeAppointmentStatus = createServerFn({ method: "POST" })
     return { id, status };
   })
   .handler(async ({ context, data }) => {
-    const session = await loadSession(context.userId);
-    const g = await guard();
+    const session = await requirePracticeAccess(context.userId, ["admin", "doctor", "staff"]);
     const sql = await sqlClient();
     const rows = await sql<{ location_id: string }>`
       select location_id from practice_appointments where id = ${data.id} limit 1
     `;
     if (
-      !session ||
       !rows[0] ||
-      !g.canMutateAppointment({
-        actorRole: session.role,
-        actorLocationId: session.locationId,
-        locationId: rows[0].location_id,
+      !decideAppointmentWrite({
+        verified: session.verified,
+        appointmentLocationId: rows[0].location_id,
+        request: data,
       })
     ) {
       throw new Error("Nicht gefunden.");
     }
     await sql`
       update practice_appointments set status = ${data.status}
-      where id = ${data.id} and location_id = ${session.locationId}
+      where id = ${data.id} and location_id = ${session.verified.locationId}
     `;
     return { ok: true as const };
   });
@@ -983,10 +1045,16 @@ export const getPracticeAppointment = createServerFn({ method: "POST" })
         ? String((input as { id: unknown }).id ?? "").slice(0, 80)
         : "";
     if (!id) throw new Error("Nicht gefunden.");
-    return { id };
+    return {
+      id,
+      claimedUserId: (input as { userId?: unknown }).userId,
+      claimedRole: (input as { role?: unknown }).role,
+      claimedLocationId: (input as { locationId?: unknown }).locationId,
+      claimedMemberId: (input as { memberId?: unknown }).memberId,
+    };
   })
   .handler(async ({ context, data }) => {
-    const actor = sessionActor(context.userId, data as { userId?: unknown });
+    const actor = sessionActor(context.userId, { userId: data.claimedUserId, role: data.claimedRole });
     const session = await loadSession(actor.userId);
     const sql = await sqlClient();
     const rows = await sql<{
@@ -1005,12 +1073,16 @@ export const getPracticeAppointment = createServerFn({ method: "POST" })
     const row = rows[0];
     if (
       !row ||
-      !appointmentVisible({
-        actorUserId: actor.userId,
-        actorRole: session?.role ?? null,
-        actorLocationId: session?.locationId ?? null,
-        customerUserId: row.customer_user_id,
-        locationId: row.location_id,
+      !decideAppointmentRead({
+        authenticatedUserId: actor.userId,
+        verified: session?.verified ?? null,
+        appointment: { customerUserId: row.customer_user_id, locationId: row.location_id },
+        request: {
+          userId: data.claimedUserId,
+          role: data.claimedRole,
+          locationId: data.claimedLocationId,
+          memberId: data.claimedMemberId,
+        },
       })
     ) {
       throw new Error("Nicht gefunden.");
