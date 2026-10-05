@@ -4,6 +4,7 @@
  * and the Nitro bundler can both consume it.
  */
 import { existsSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 export const DEFAULT_APP_NAME = "Grok App";
@@ -414,13 +415,12 @@ function insertBeforeHeadClose(html, snippet) {
 }
 
 export function normalizeHeadContext(ctx = {}) {
-  const cwd = ctx.cwd ?? process.cwd();
-  // Middleware passes a baked `site`. Still consult the workspace so a
-  // public/og.jpg generated after that snapshot (or missed by a wrong cwd)
-  // wins over the og.grok.me placeholder. Vercel has no public/ to read, so
-  // a correct bake is unchanged.
+  // Callers that omit cwd are unit fixtures. Do not inherit the workspace
+  // site.json or public/og.jpg; the Vite plugin always passes its root.
+  const hasCwd = typeof ctx.cwd === "string" && ctx.cwd.length > 0;
+  const cwd = hasCwd ? ctx.cwd : join(tmpdir(), "grok-pwa-unscoped-cwd");
   const site = applyCustomCardFromFs(
-    ctx.site !== undefined ? ctx.site : snapshotOgIdentity(cwd).site,
+    ctx.site !== undefined ? ctx.site : hasCwd ? snapshotOgIdentity(cwd).site : {},
     cwd,
   );
   const appName = resolveOgTitle(site, ctx.appName ?? DEFAULT_APP_NAME, ctx.host ?? "");
