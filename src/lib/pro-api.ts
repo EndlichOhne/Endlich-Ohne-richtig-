@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { previewBillingAllowed } from "@/lib/server-boundary";
 import { skuDays, type BillingSku, type ProPlan } from "@/lib/pro";
 
 export type ProStatus = {
@@ -211,7 +212,12 @@ export const activateProPreview = createServerFn({ method: "POST" })
     return { sku: "year" };
   })
   .handler(async ({ context, data }) => {
-    if (stripeReady()) {
+    if (
+      !previewBillingAllowed({
+        stripeReady: stripeReady(),
+        vercelEnv: process.env.VERCEL_ENV,
+      })
+    ) {
       throw new Error("Bitte über Stripe abschließen.");
     }
     const { upsertPaidTx, fulfillTx } = await import("@/lib/billing");

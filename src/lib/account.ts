@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import type { PlanItem } from "@/lib/planner";
+import { sessionActor } from "@/lib/server-boundary";
 import { assertDepositPaidForUser } from "@/lib/checkout";
 import type { Payment } from "@/lib/payments";
 
@@ -58,7 +59,25 @@ export const replacePlanItems = createServerFn({ method: "POST" })
   })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    await sql`delete from plan_items where user_id = ${context.userId}`;
+    const actor = sessionActor(context.userId);
+    for (const item of data) {
+      if (!item.id) continue;
+      const foreign = await sql<{ id: string }>`
+        select id from plan_items
+        where id = ${item.id} and user_id <> ${actor.userId}
+        limit 1
+      `;
+      if (foreign[0]) throw new Error("Nicht erlaubt.");
+      if (item.paymentId) {
+        const receipt = await sql<{ id: string }>`
+          select id from payment_receipts
+          where id = ${item.paymentId} and user_id = ${actor.userId}
+          limit 1
+        `;
+        if (!receipt[0]) throw new Error("Nicht erlaubt.");
+      }
+    }
+    await sql`delete from plan_items where user_id = ${actor.userId}`;
     for (const item of data) {
       if (!item.id || !item.date) continue;
       await sql`

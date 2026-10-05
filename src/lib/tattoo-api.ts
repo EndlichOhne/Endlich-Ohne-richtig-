@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { getSql } from "@/lib/db";
+import { canAttachOwnTattoo } from "@/lib/server-boundary";
 import { FREE_LIMITS } from "@/lib/premium";
 import { isProUser } from "@/lib/pro-api";
 import { progressFromSessions } from "@/lib/tattoo";
@@ -393,6 +394,14 @@ export const upsertReminder = createServerFn({ method: "POST" })
   })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
+    if (data.tattooId) {
+      const owned = await sql<{ user_id: string }>`
+        select user_id from tattoos where id = ${data.tattooId} limit 1
+      `;
+      if (!owned[0] || !canAttachOwnTattoo(owned[0].user_id, context.userId)) {
+        throw new Error("Nicht gefunden.");
+      }
+    }
     await sql`
       insert into tattoo_reminders (id, user_id, tattoo_id, title, due_date, kind, done, created_at)
       values (${data.id}, ${context.userId}, ${data.tattooId ?? null}, ${data.title}, ${data.dueDate}, ${data.kind}, ${data.done}, ${data.createdAt})

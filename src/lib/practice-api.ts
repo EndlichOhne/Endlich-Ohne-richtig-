@@ -3,6 +3,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { BRAND } from "@/lib/brand";
 import { PRACTICE_SESSION_MS } from "@/lib/reauth";
+import { appointmentVisible, sessionActor } from "@/lib/server-boundary";
 
 const CLINIC_EMAILS = [BRAND.email, "kontakt@endlich-ohne.de"].map((e) => e.toLowerCase());
 
@@ -985,7 +986,8 @@ export const getPracticeAppointment = createServerFn({ method: "POST" })
     return { id };
   })
   .handler(async ({ context, data }) => {
-    const session = await loadSession(context.userId);
+    const actor = sessionActor(context.userId, data as { userId?: unknown });
+    const session = await loadSession(actor.userId);
     const sql = await sqlClient();
     const rows = await sql<{
       id: string;
@@ -993,18 +995,26 @@ export const getPracticeAppointment = createServerFn({ method: "POST" })
       status: string;
       note: string;
       location_id: string;
+      customer_user_id: string;
     }>`
-      select id, starts_at, status, note, location_id
+      select id, starts_at, status, note, location_id, customer_user_id
       from practice_appointments
       where id = ${data.id}
-        and (
-          customer_user_id = ${context.userId}
-          or location_id = ${session?.locationId ?? ""}
-        )
       limit 1
     `;
     const row = rows[0];
-    if (!row) throw new Error("Nicht gefunden.");
+    if (
+      !row ||
+      !appointmentVisible({
+        actorUserId: actor.userId,
+        actorRole: session?.role ?? null,
+        actorLocationId: session?.locationId ?? null,
+        customerUserId: row.customer_user_id,
+        locationId: row.location_id,
+      })
+    ) {
+      throw new Error("Nicht gefunden.");
+    }
     return {
       id: row.id,
       startsAt: row.starts_at,

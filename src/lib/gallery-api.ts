@@ -107,11 +107,16 @@ async function loadTimeline(ids: string[]): Promise<Record<string, TimelineShot[
   const out: Record<string, TimelineShot[]> = {};
   if (ids.length === 0) return out;
   const sql = await getSql();
-  const rows = await sql<TimeRow>`
-    select id, result_id, image_url, session_number, taken_at, caption, sort_order
-    from gallery_timeline
-    order by sort_order asc
-  `;
+  const rows: TimeRow[] = [];
+  for (const id of ids) {
+    const part = await sql<TimeRow>`
+      select id, result_id, image_url, session_number, taken_at, caption, sort_order
+      from gallery_timeline
+      where result_id = ${id}
+      order by sort_order asc
+    `;
+    rows.push(...part);
+  }
   const want = new Set(ids);
   for (const row of rows) {
     if (!want.has(row.result_id)) continue;
